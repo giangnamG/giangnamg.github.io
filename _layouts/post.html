@@ -1,0 +1,97 @@
+---
+layout: default
+refactor: true
+panel_includes:
+  - toc
+tail_includes:
+  - related-posts
+  - post-nav
+script_includes:
+  - comment
+---
+
+{% include lang.html %}
+{% include toc-status.html %}
+
+<article class="notion-post px-1" data-toc="{{ enable_toc }}">
+  <header class="notion-page-head notion-post__header">
+    <span class="notion-page-head__icon"><i class="far fa-file-lines"></i></span>
+    <div>
+      <p class="notion-page-head__eyebrow">Published note</p>
+      <h1 data-toc-skip>{{ page.title }}</h1>
+      {% if page.description %}
+        <p class="notion-post__description">{{ page.description }}</p>
+      {% endif %}
+    </div>
+  </header>
+
+  <div class="notion-post__meta">
+    <span class="notion-post__meta-item">
+      <i class="far fa-calendar"></i>
+      {% include datetime.html date=page.date tooltip=true lang=lang %}
+    </span>
+
+    {% if page.last_modified_at and page.last_modified_at != page.date %}
+      <span class="notion-post__meta-item">
+        <i class="far fa-clock"></i>
+        {% include datetime.html date=page.last_modified_at tooltip=true lang=lang %}
+      </span>
+    {% endif %}
+
+    {% if page.categories and page.categories.size > 0 %}
+      <span class="notion-post__meta-item">
+        <i class="far fa-folder-open"></i>
+        {{ page.categories | first }}
+      </span>
+    {% endif %}
+  </div>
+
+  {% if page.image %}
+    {% capture src %}src="{{ page.image.path | default: page.image }}"{% endcapture %}
+    {% capture class %}class="preview-img notion-post__image{% if page.image.no_bg %} no-bg{% endif %}"{% endcapture %}
+    {% capture alt %}alt="{{ page.image.alt | xml_escape | default: 'Preview image' }}"{% endcapture %}
+    {% if page.image.lqip %}
+      {%- capture lqip -%}lqip="{{ page.image.lqip }}"{%- endcapture -%}
+    {% endif %}
+
+    <div class="notion-post__cover">
+      <img {{ src }} {{ class }} {{ alt }} w="1200" h="630" {{ lqip }}>
+    </div>
+  {% endif %}
+
+  <div class="content notion-post__content">
+    {{ content }}
+  </div>
+
+  <footer class="notion-post__footer">
+    {% if page.categories and page.categories.size > 0 %}
+      <div class="notion-post__property">
+        <span class="notion-post__property-label">Categories</span>
+        <div class="notion-post__chips">
+          {% for category in page.categories %}
+            <a href="{{ category | slugify | prepend: '/categories/' | append: '/' | relative_url }}" class="notion-chip">
+              {{ category }}
+            </a>
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+
+    {% if page.tags and page.tags.size > 0 %}
+      <div class="notion-post__property">
+        <span class="notion-post__property-label">Tags</span>
+        <div class="notion-post__chips">
+          {% for tag in page.tags %}
+            <a href="{{ tag | slugify | prepend: '/tags/' | append: '/' | relative_url }}" class="notion-chip notion-chip--muted">
+              {{ tag }}
+            </a>
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+
+    <div class="notion-post__share">
+      {% include post-sharing.html lang=lang %}
+    </div>
+  </footer>
+</article>
