@@ -1,7 +1,8 @@
 ---
 layout: post
 title: Prototype Pollution
-category: portswigger
+categories:
+  - PortSwigger
 tags: prototype-pollution
 
 ---

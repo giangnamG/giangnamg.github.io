@@ -1,0 +1,12 @@
+- name: PortSwigger
+  slug: portswigger
+- name: HTB Challenge - Labs
+  slug: htb-challenge-labs
+- name: HTB Machine - Labs
+  slug: htb-machine-labs
+- name: HTB - PTES
+  slug: htb-ptes
+- name: Cyber Jutsu
+  slug: cyber-jutsu
+- name: Hackerviser
+  slug: hackerviser
