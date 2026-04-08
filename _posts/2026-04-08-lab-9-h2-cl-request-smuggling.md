@@ -1,12 +1,14 @@
 ---
 layout: post
 title: "Lab 9: H2.CL request smuggling"
+render_with_liquid: false
 categories:
   - PortSwigger
 tags:
   - portswigger
-  - labs
   - http-request-smuggling
+  - labs
+source_collection: notion_portswigger
 ---
 Phòng thí nghiệm này dễ bị tấn công request smuggling vì máy chủ front-end hạ cấp các yêu cầu HTTP/2 ngay cả khi chúng có độ dài không rõ ràng.
 
@@ -31,7 +33,7 @@ Nếu không, nó sẽ tải payload từ máy chủ khai thác nhưng không th
     x=1
     ```
     
-    ![image.png]({ '/assets/img/portswigger-labs/lab-9-h2-cl-request-smuggling/image.png' | relative_url })
+    ![image.png](/assets/img/portswigger/lab-9-h2-cl-request-smuggling/image.png)
     
     Nếu status code thay đổi luân phiên 200 và 404 thì xác nhận đây là lỗi H2.CL
     

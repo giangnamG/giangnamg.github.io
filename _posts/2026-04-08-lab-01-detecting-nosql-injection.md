@@ -1,24 +1,26 @@
 ---
 layout: post
 title: "Lab 01: Detecting NoSQL injection"
+render_with_liquid: false
 categories:
   - PortSwigger
 tags:
   - portswigger
-  - labs
   - nosql-injection
+  - labs
+source_collection: notion_portswigger
 ---
 Bộ lọc danh mục sản phẩm trong bài lab này hoạt động trên nền tảng cơ sở dữ liệu NoSQL MongoDB. Nó tồn tại lỗ hổng NoSQL injection.
 Để hoàn thành bài lab, hãy thực hiện một cuộc tấn công NoSQL injection khiến ứng dụng hiển thị các sản phẩm chưa được phát hành
 
 1. Trong trình duyệt của Burp, truy cập bài lab và nhấp vào một bộ lọc danh mục sản phẩm.
-2. Trong Burp, đi tới **Proxy > HTTP history**. Nhấp chuột phải vào yêu cầu lọc danh mục (category filter request) và chọn **Send to Repeater**.
+2. Trong Burp, đi tới **Proxy &gt; HTTP history**. Nhấp chuột phải vào yêu cầu lọc danh mục (category filter request) và chọn **Send to Repeater**.
     
-    ![image.png]({ '/assets/img/portswigger-labs/lab-01-detecting-nosql-injection/image.png' | relative_url })
+    ![image.png](/assets/img/portswigger/lab-01-detecting-nosql-injection/image.png)
     
 3. Trong **Repeater**, gửi một ký tự `'`vào tham số category. Chú ý rằng việc này gây ra lỗi cú pháp JavaScript. Điều này có thể cho thấy đầu vào của người dùng không được lọc hoặc làm sạch (sanitized) đúng cách.
     
-    ![image.png]({ '/assets/img/portswigger-labs/lab-01-detecting-nosql-injection/image%201.png' | relative_url })
+    ![image.png](/assets/img/portswigger/lab-01-detecting-nosql-injection/image%201.png)
     
 4. Gửi một payload JavaScript hợp lệ vào giá trị của tham số truy vấn category. Bạn có thể sử dụng payload sau:
     
@@ -26,7 +28,7 @@ Bộ lọc danh mục sản phẩm trong bài lab này hoạt động trên nề
     Gifts'+'
     ```
     
-    ![image.png]({ '/assets/img/portswigger-labs/lab-01-detecting-nosql-injection/image%202.png' | relative_url })
+    ![image.png](/assets/img/portswigger/lab-01-detecting-nosql-injection/image%202.png)
     
     Đảm bảo mã hóa URL (URL-encode) payload bằng cách bôi đen nó và sử dụng phím tắt Ctrl-U. Chú ý rằng nó không gây ra lỗi cú pháp. Điều này chỉ ra rằng một dạng injection phía máy chủ có thể đang diễn ra.
     
@@ -41,7 +43,7 @@ Bộ lọc danh mục sản phẩm trong bài lab này hoạt động trên nề
         
         Kết quả: không có sản phẩm nào được truy xuất.
         
-        ![image.png]({ '/assets/img/portswigger-labs/lab-01-detecting-nosql-injection/image%203.png' | relative_url })
+        ![image.png](/assets/img/portswigger/lab-01-detecting-nosql-injection/image%203.png)
         
     - Chèn một điều kiện **đúng** (true) vào tham số category. Ví dụ:
         
@@ -53,7 +55,7 @@ Bộ lọc danh mục sản phẩm trong bài lab này hoạt động trên nề
         
         Kết quả: các sản phẩm trong danh mục Gifts được truy xuất.
         
-        ![image.png]({ '/assets/img/portswigger-labs/lab-01-detecting-nosql-injection/image%204.png' | relative_url })
+        ![image.png](/assets/img/portswigger/lab-01-detecting-nosql-injection/image%204.png)
         
 6. Gửi một điều kiện boolean luôn trả về giá trị đúng (true) trong tham số category. Ví dụ:
     
@@ -61,7 +63,7 @@ Bộ lọc danh mục sản phẩm trong bài lab này hoạt động trên nề
     Gifts'||1||'
     ```
     
-    ![image.png]({ '/assets/img/portswigger-labs/lab-01-detecting-nosql-injection/image%205.png' | relative_url })
+    ![image.png](/assets/img/portswigger/lab-01-detecting-nosql-injection/image%205.png)
     
 7. Nhấp chuột phải vào phản hồi (response) và chọn **Show response in browser** (Hiển thị phản hồi trong trình duyệt).
 8. Sao chép URL và tải nó trong trình duyệt của Burp. Xác minh rằng phản hồi hiện đã chứa các sản phẩm chưa phát hành. Bài lab đã được giải quyết.

