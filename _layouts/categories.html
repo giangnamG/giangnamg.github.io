@@ -1,39 +1,55 @@
 ---
 layout: page
+# Curated Categories matching the Chirpy card style
 ---
 
+{% include lang.html %}
+
 {% assign configured_categories = site.data.categories %}
+{% assign group_index = 0 %}
+{% assign HEAD_PREFIX = 'h_' %}
 
-<div id="categories" class="d-flex flex-column gap-3">
-  {% for item in configured_categories %}
-    {% assign posts = site.categories[item.name] %}
-    {% assign post_count = posts | size %}
-    {% assign category_url = '/categories/' | append: item.slug | append: '/' | relative_url %}
+{% for item in configured_categories %}
+  {% assign category_name = item.name %}
+  {% assign posts_of_category = site.categories[category_name] %}
+  {% assign top_posts_size = posts_of_category | size %}
 
-    <div class="card">
-      <div class="card-body d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
-        <div>
-          {% if post_count > 0 %}
-            <h3 class="mb-1 h5"><a href="{{ category_url }}" class="post-tag">{{ item.name }}</a></h3>
-          {% else %}
-            <h3 class="mb-1 h5">{{ item.name }}</h3>
-          {% endif %}
+  <div class="card categories">
+    <div
+      id="{{ HEAD_PREFIX }}{{ group_index }}"
+      class="card-header d-flex justify-content-between hide-border-bottom"
+    >
+      <span class="ms-2">
+        <i class="far fa-folder fa-fw"></i>
 
-          <p class="mb-0 text-muted">
-            {% if post_count > 0 %}
-              {{ post_count }} post{% if post_count != 1 %}s{% endif %}
-            {% else %}
-              No posts yet
-            {% endif %}
-          </p>
-        </div>
-
-        {% if post_count > 0 %}
-          <a class="btn btn-outline-primary btn-sm" href="{{ category_url }}">Open</a>
+        {% if top_posts_size > 0 %}
+          {% capture category_url %}/categories/{{ category_name | slugify | url_encode }}/{% endcapture %}
+          <a href="{{ category_url | relative_url }}" class="mx-2">{{ category_name }}</a>
         {% else %}
-          <span class="btn btn-outline-secondary btn-sm disabled" aria-disabled="true">Coming soon</span>
+          <span class="mx-2">{{ category_name }}</span>
         {% endif %}
-      </div>
+
+        <span class="text-muted small font-weight-light">
+          {{ top_posts_size }}
+          {% if top_posts_size > 1 %}
+            {{
+              site.data.locales[lang].categories.post_measure.plural
+              | default: site.data.locales[lang].categories.post_measure
+            }}
+          {% else %}
+            {{
+              site.data.locales[lang].categories.post_measure.singular
+              | default: site.data.locales[lang].categories.post_measure
+            }}
+          {% endif %}
+        </span>
+      </span>
+
+      <span class="category-trigger hide-border-bottom disabled">
+        <i class="fas fa-fw fa-angle-right"></i>
+      </span>
     </div>
-  {% endfor %}
-</div>
+  </div>
+
+  {% assign group_index = group_index | plus: 1 %}
+{% endfor %}
