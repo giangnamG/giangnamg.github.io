@@ -3,11 +3,10 @@ layout: post
 title: "Path traversal"
 render_with_liquid: false
 categories:
-  - PortSwigger
+  - Common Injection
 tags:
-  - portswigger
   - path-traversal
-source_collection: notion_portswigger
+source_collection: notion
 ---
 Created by: Nguyễn Giang Nam
 Topics: Server-side
