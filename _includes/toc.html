@@ -1,30 +1,6 @@
 {% include toc-status.html %}
 
 {% if enable_toc %}
-  <style>
-    @media (min-width: 1200px) {
-      #panel-wrapper {
-        display: flex;
-        flex-direction: column;
-      }
-
-      #panel-wrapper .toc-border-cover {
-        order: 0;
-      }
-
-      #panel-wrapper #toc-wrapper {
-        order: 1;
-        margin-top: 0;
-        top: 2rem;
-      }
-
-      #panel-wrapper .access {
-        order: 2;
-        margin-top: 2rem;
-      }
-    }
-  </style>
-
   <div class="toc-border-cover z-3"></div>
   <section id="toc-wrapper" class="invisible position-sticky ps-0 pe-4 pb-4">
     <h2 class="panel-heading ps-3 pb-2 mb-0">{{- site.data.locales[include.lang].panel.toc -}}</h2>
