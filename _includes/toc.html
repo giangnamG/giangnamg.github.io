@@ -1,0 +1,127 @@
+{% include toc-status.html %}
+
+{% if enable_toc %}
+  <style>
+    @media (min-width: 1200px) {
+      #panel-wrapper {
+        display: flex;
+        flex-direction: column;
+      }
+
+      #panel-wrapper .toc-border-cover {
+        order: 0;
+      }
+
+      #panel-wrapper #toc-wrapper {
+        order: 1;
+        margin-top: 0;
+        top: 2rem;
+      }
+
+      #panel-wrapper .access {
+        order: 2;
+        margin-top: 2rem;
+      }
+    }
+  </style>
+
+  <div class="toc-border-cover z-3"></div>
+  <section id="toc-wrapper" class="invisible position-sticky ps-0 pe-4 pb-4">
+    <h2 class="panel-heading ps-3 pb-2 mb-0">{{- site.data.locales[include.lang].panel.toc -}}</h2>
+    <nav id="toc"></nav>
+  </section>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const content = document.querySelector('main article .content');
+      const toc = document.getElementById('toc');
+      const popupToc = document.getElementById('toc-popup-content');
+      const tocWrapper = document.getElementById('toc-wrapper');
+
+      if (!content || !toc || !tocWrapper) {
+        return;
+      }
+
+      const slugify = (value) =>
+        value
+          .toLowerCase()
+          .trim()
+          .replace(/[^\p{L}\p{N}\s-]/gu, '')
+          .replace(/\s+/g, '-')
+          .replace(/-+/g, '-');
+
+      const headings = Array.from(content.querySelectorAll('h1, h2, h3, h4')).filter((heading) => {
+        if (heading.hasAttribute('data-toc-skip')) {
+          return false;
+        }
+
+        const text = heading.textContent.trim();
+        if (!text) {
+          return false;
+        }
+
+        if (!heading.id) {
+          heading.id = slugify(text);
+        }
+
+        return true;
+      });
+
+      if (!headings.length) {
+        return;
+      }
+
+      const buildTocTree = () => {
+        const root = document.createElement('ul');
+        const stack = [{ level: 0, list: root }];
+
+        headings.forEach((heading, index) => {
+          const level = Number.parseInt(heading.tagName.slice(1), 10);
+
+          while (stack.length > 1 && level <= stack[stack.length - 1].level) {
+            stack.pop();
+          }
+
+          const item = document.createElement('li');
+          if (index === 0) {
+            item.classList.add('is-active-li');
+          }
+
+          const link = document.createElement('a');
+          link.href = `#${heading.id}`;
+          link.textContent = heading.textContent.trim();
+          link.classList.add('toc-link');
+
+          if (index === 0) {
+            link.classList.add('is-active-link');
+          }
+
+          item.appendChild(link);
+
+          const children = document.createElement('ul');
+          item.appendChild(children);
+
+          stack[stack.length - 1].list.appendChild(item);
+          stack.push({ level, list: children });
+        });
+
+        root.querySelectorAll('ul').forEach((list) => {
+          if (!list.children.length) {
+            list.remove();
+          }
+        });
+
+        return root;
+      };
+
+      const tocTree = buildTocTree();
+      toc.replaceChildren(tocTree);
+
+      if (popupToc) {
+        popupToc.replaceChildren(tocTree.cloneNode(true));
+      }
+
+      tocWrapper.classList.remove('invisible');
+    });
+  </script>
+{% endif %}
