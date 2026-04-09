@@ -12,6 +12,8 @@ source_collection: notion_portswigger
 Created by: Nguyễn Giang Nam
 Topics: Advanced
 
+# **Lab 01: Authentication bypass via OAuth implicit flow**
+
 Server **tin tưởng dữ liệu từ client** trong OAuth implicit flow. Client nhận `email` và `access_token` từ OAuth provider, nhưng server **KHÔNG verify** email có khớp với token không. Attacker có thể **thay đổi email** trong request mà vẫn giữ nguyên token → Login as bất kỳ ai.
 
 **OAuth Implicit Flow bình thường**
@@ -156,6 +158,8 @@ Server **tin tưởng dữ liệu từ client** trong OAuth implicit flow. Clien
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
+
+# **Lab 02: SSRF via OpenID dynamic client registration**
 
 OAuth server cho phép **dynamic client registration** mà **không cần authentication**. Khi đăng ký client, attacker có thể chỉ định `logo_uri`. Server sẽ **fetch logo từ URL này** khi render authorization page, dẫn đến **SSRF** - cho phép attacker đọc AWS metadata endpoint và lấy credentials.
 
@@ -463,6 +467,8 @@ OAuth server cho phép **dynamic client registration** mà **không cần authen
 ╚══════════════════════════════════════════════════════════════════════════════╝
 ```
 
+# **Lab 03: Forced OAuth profile linking**
+
 Chức năng **link OAuth profile** không có **CSRF protection** (thiếu `state` parameter). Attacker có thể tạo CSRF attack để **link social profile của mình vào account của victim**. Sau đó attacker login bằng social profile của mình → truy cập account của victim.
 
 **OAuth Profile Linking bình thường**
@@ -637,6 +643,8 @@ Chức năng **link OAuth profile** không có **CSRF protection** (thiếu `sta
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
+
+# **Lab 04: OAuth account hijacking via redirect_uri**
 
 OAuth provider **không validate redirect_uri** đúng cách. Attacker có thể **thay đổi redirect_uri** thành domain của mình. Khi victim có **active session** với OAuth provider, authorization code sẽ được gửi đến domain của attacker → Attacker dùng code để **hijack victim's account**.
 
@@ -827,6 +835,8 @@ OAuth provider **không validate redirect_uri** đúng cách. Attacker có thể
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
+
+# **Lab 05: Stealing OAuth access tokens via an open redirect**
 
 Lab này kết hợp **3 lỗ hổng** để steal OAuth access token:
 
@@ -1043,6 +1053,8 @@ Attacker chain các lỗ hổng này để **redirect victim's access token** đ
 ║                                                                              ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 ```
+
+# **Lab 06: Stealing OAuth access tokens via a proxy page**
 
 Lab này chain **2 lỗ hổng** để steal OAuth access token:
 
@@ -1304,6 +1316,7 @@ Attacker tạo iframe chứa comment form, listen postMessage(), nhận được
 ```
 
 ```jsx
+# 6. Key Technical Points
 ```
 ╔══════════════════════════════════════════════════════════════════════════════╗
 ║                         KEY TECHNICAL INSIGHTS                               ║

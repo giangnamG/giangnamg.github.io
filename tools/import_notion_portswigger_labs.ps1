@@ -290,7 +290,8 @@ foreach ($page in $selectedPages) {
   $topic = $page.Topic
 
   $body = $rawContent
-  $body = [regex]::Replace($body, "(?m)^#\s+.+?\r?\n+", "", 1)
+  # Strip only the document title heading, keep all nested headings from the Notion export.
+  $body = ([regex]::new("(?m)^#\s+.+?\r?\n+")).Replace($body, "", 1)
   $body = [regex]::Replace($body, "(?im)^(Created|Status|Tags):.*(?:\r?\n)?", "")
   $body = $body.Trim()
 

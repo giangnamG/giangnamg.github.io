@@ -12,10 +12,16 @@ source_collection: notion_portswigger
 Created by: Nguyễn Giang Nam
 Topics: Server-side
 
+# **Lab 01: SQL injection vulnerability in WHERE clause allowing retrieval of hidden data**
+
 Sửa tham số `category` và gán cho nó giá trị `'+OR+1=1--`
+
+# **Lab 02: SQL injection vulnerability allowing login bypass**
 
 - Sử dụng Burp Suite để chặn và sửa đổi yêu cầu đăng nhập.
 - Sửa đổi tham số tên người dùng, đặt giá trị cho nó: `administrator'--`
+
+# **Lab 03: SQL injection attack, querying the database type and version on Oracle**
 
 1. Sử dụng Burp Suite để chặn và sửa đổi yêu cầu đặt bộ lọc danh mục sản phẩm.
 2. Xác định [số lượng cột đang được truy vấn trả về](https://portswigger.net/web-security/sql-injection/union-attacks/lab-determine-number-of-columns) và [cột nào chứa dữ liệu văn bản](https://portswigger.net/web-security/sql-injection/union-attacks/lab-find-column-containing-text). Xác minh rằng truy vấn đang trả về hai cột, cả hai đều chứa văn bản, bằng cách sử dụng tải trọng như sau trong tham số `category`:
@@ -31,6 +37,8 @@ Sửa tham số `category` và gán cho nó giá trị `'+OR+1=1--`
     ```
     
 
+# **Lab 04: SQL injection attack, querying the database type and version on MySQL and Microsoft**
+
 1. Sử dụng Burp Suite để chặn và sửa đổi yêu cầu đặt bộ lọc danh mục sản phẩm.
 2. Xác định [số lượng cột đang được truy vấn trả về](https://portswigger.net/web-security/sql-injection/union-attacks/lab-determine-number-of-columns) và [cột nào chứa dữ liệu văn bản](https://portswigger.net/web-security/sql-injection/union-attacks/lab-find-column-containing-text). Xác minh rằng truy vấn đang trả về hai cột, cả hai đều chứa văn bản, bằng cách sử dụng tải trọng như sau trong tham số `category`:
     
@@ -44,6 +52,8 @@ Sửa tham số `category` và gán cho nó giá trị `'+OR+1=1--`
     '+UNION+SELECT+@@version,+NULL#
     ```
     
+
+# **Lab 05: SQL injection attack, listing the database contents on non-Oracle databases**
 
 1. Sử dụng Burp Suite để chặn và sửa đổi yêu cầu đặt bộ lọc danh mục sản phẩm.
 2. Xác định [số lượng cột đang được truy vấn trả về](https://portswigger.net/web-security/sql-injection/union-attacks/lab-determine-number-of-columns) và [cột nào chứa dữ liệu văn bản](https://portswigger.net/web-security/sql-injection/union-attacks/lab-find-column-containing-text). Xác minh rằng truy vấn đang trả về hai cột, cả hai đều chứa văn bản, bằng cách sử dụng tải trọng như sau trong tham số `category`:
@@ -74,6 +84,8 @@ Sửa tham số `category` và gán cho nó giá trị `'+OR+1=1--`
     
 8. Tìm mật khẩu cho người dùng `quản trị viên` và sử dụng mật khẩu đó để đăng nhập.
 
+# **Lab 06: SQL injection attack, listing the database contents on Oracle**
+
 1. Sử dụng Burp Suite để chặn và sửa đổi yêu cầu đặt bộ lọc danh mục sản phẩm.
 2. Xác định [số lượng cột đang được truy vấn trả về](https://portswigger.net/web-security/sql-injection/union-attacks/lab-determine-number-of-columns) và [cột nào chứa dữ liệu văn bản](https://portswigger.net/web-security/sql-injection/union-attacks/lab-find-column-containing-text). Xác minh rằng truy vấn đang trả về hai cột, cả hai đều chứa văn bản, bằng cách sử dụng tải trọng như sau trong tham số `category`:
     
@@ -103,6 +115,8 @@ Sửa tham số `category` và gán cho nó giá trị `'+OR+1=1--`
     
 8. Tìm mật khẩu cho người dùng `quản trị viên` và sử dụng mật khẩu đó để đăng nhập.
 
+# **Lab 07: SQL injection UNION attack, determining the number of columns returned by the query**
+
 **Cách 1: Sử dụng order by**
 
 1. Sửa đổi tham số `category` , cung cấp cho nó giá trị `category=Pets' order by 4-- -`. Quan sát rằng một lỗi xảy ra.
@@ -128,6 +142,8 @@ Sửa tham số `category` và gán cho nó giá trị `'+OR+1=1--`
     
 4. Tiếp tục thêm các giá trị rỗng cho đến khi lỗi biến mất và phản hồi bao gồm nội dung bổ sung có chứa các giá trị rỗng.
 
+# **Lab 08: SQL injection UNION attack, finding a column containing text**
+
 1. Sử dụng Burp Suite để chặn và sửa đổi yêu cầu đặt bộ lọc danh mục sản phẩm.
 2. Xác định [số cột đang được truy vấn trả về](https://portswigger.net/web-security/sql-injection/union-attacks/lab-determine-number-of-columns). Xác minh rằng truy vấn đang trả về ba cột, sử dụng tải trọng sau trong tham số `category`:
     
@@ -142,6 +158,8 @@ Sửa tham số `category` và gán cho nó giá trị `'+OR+1=1--`
     ```
     
 4. Nếu xảy ra lỗi, hãy chuyển sang giá trị rỗng tiếp theo và thử thay thế.
+
+# **Lab 09: SQL injection UNION attack, retrieving data from other tables**
 
 1. Sử dụng Burp Suite để chặn và sửa đổi yêu cầu đặt bộ lọc danh mục sản phẩm.
 2. Xác định [số lượng cột đang được truy vấn trả về](https://portswigger.net/web-security/sql-injection/union-attacks/lab-determine-number-of-columns) và [cột nào chứa dữ liệu văn bản](https://portswigger.net/web-security/sql-injection/union-attacks/lab-find-column-containing-text). Xác minh rằng truy vấn đang trả về hai cột, cả hai đều chứa văn bản, sử dụng tải trọng như sau trong tham số `category`:
@@ -158,6 +176,8 @@ Sửa tham số `category` và gán cho nó giá trị `'+OR+1=1--`
     
 4. Xác minh rằng phản hồi của ứng dụng có chứa tên người dùng và mật khẩu.
 
+# Lab 10: **SQL injection UNION attack, retrieving multiple values in a single column**
+
 1. Sử dụng Burp Suite để chặn và sửa đổi yêu cầu đặt bộ lọc danh mục sản phẩm.
 2. Xác định [số lượng cột đang được truy vấn trả về](https://portswigger.net/web-security/sql-injection/union-attacks/lab-determine-number-of-columns) và [cột nào chứa dữ liệu văn bản](https://portswigger.net/web-security/sql-injection/union-attacks/lab-find-column-containing-text). Xác minh rằng truy vấn đang trả về hai cột, chỉ một trong số đó chứa văn bản, sử dụng tải trọng như sau trong tham số `category`:
     
@@ -172,6 +192,8 @@ Sửa tham số `category` và gán cho nó giá trị `'+OR+1=1--`
     ```
     
 4. Xác minh rằng phản hồi của ứng dụng có chứa tên người dùng và mật khẩu.
+
+# **Lab 11: Blind SQL injection with conditional responses**
 
 1. Truy cập trang đầu của cửa hàng và sử dụng Burp Suite để chặn và sửa đổi yêu cầu có chứa cookie `TrackingId`. Để đơn giản, giả sử giá trị ban đầu của cookie là `TrackingId=xyz`.
 2. Sửa đổi cookie `TrackingId`, thay đổi thành:
@@ -256,6 +278,8 @@ Sửa tham số `category` và gán cho nó giá trị `'+OR+1=1--`
 16. Khởi động đòn tấn công đã sửa đổi, xem lại kết quả và lưu ý ký tự ở vị trí số 2
 17. Tiếp tục quá trình này để kiểm tra offset 3, 4, v.v. cho đến khi bạn có toàn bộ mật khẩu.
 18. Trong trình duyệt, nhấp vào Tài khoản của tôi để mở trang đăng nhập. Sử dụng mật khẩu để đăng nhập với tư cách `người dùng quản trị viên`.
+
+# **Lab 12: Blind SQL injection with conditional errors**
 
 1. Truy cập trang đầu của cửa hàng và sử dụng Burp Suite để chặn và sửa đổi yêu cầu có chứa cookie `TrackingId`. Để đơn giản, giả sử giá trị ban đầu của cookie là `TrackingId=xyz`.
 2. Sửa đổi cookie `TrackingId`, thêm một dấu ngoặc kép vào đó:
@@ -347,6 +371,8 @@ Sửa tham số `category` và gán cho nó giá trị `'+OR+1=1--`
     ```
     
 
+# **Lab 13: Visible error-based SQL injection**
+
 1. Sử dụng trình duyệt tích hợp của Burp, khám phá chức năng phòng thí nghiệm.
 2. Vào tab **Lịch sử HTTP &gt; của Proxy** và tìm một `GET /` request có chứa cookie `TrackingId`.
 3. Trong Repeater, thêm một dấu ngoặc kép vào giá trị của cookie `TrackingId` của bạn và gửi yêu cầu.
@@ -409,6 +435,8 @@ Sửa tham số `category` và gán cho nó giá trị `'+OR+1=1--`
     
 18. Đăng nhập với tư cách `quản trị viên` bằng mật khẩu bị đánh cắp để giải quyết phòng thí nghiệm.
 
+# **Lab 14: Blind SQL injection with time delays**
+
 1. Truy cập trang đầu của cửa hàng và sử dụng Burp Suite để chặn và sửa đổi yêu cầu có chứa cookie `TrackingId`.
 2. Sửa đổi cookie `TrackingId`, thay đổi thành:
     
@@ -417,6 +445,8 @@ Sửa tham số `category` và gán cho nó giá trị `'+OR+1=1--`
     ```
     
 3. Gửi yêu cầu và quan sát rằng ứng dụng mất 10 giây để phản hồi.
+
+# Lab 15: **Lab: Blind SQL injection with time delays and information retrieval**
 
 1. Truy cập trang đầu của cửa hàng và sử dụng Burp Suite để chặn và sửa đổi yêu cầu có chứa cookie `TrackingId`.
 2. Sửa đổi cookie `TrackingId`, thay đổi thành:
@@ -464,6 +494,8 @@ Sửa tham số `category` và gán cho nó giá trị `'+OR+1=1--`
 7. Để có thể biết khi nào ký tự chính xác được gửi, bạn sẽ cần theo dõi thời gian cần thiết để ứng dụng phản hồi từng yêu cầu. Để quá trình này đáng tin cậy nhất có thể, bạn cần định cấu hình cuộc tấn công Intruder để đưa ra các yêu cầu trong một luồng duy nhất. Để thực hiện việc này, hãy nhấp vào tab  **Nhóm tài nguyên** để mở bảng điều khiển bên Nhóm **tài nguyên** và thêm cuộc tấn công vào nhóm tài nguyên bằng **Yêu cầu đồng thời tối đa** được đặt thành `1`.
 8. Trong trình duyệt, nhấp vào **Tài khoản của tôi** để mở trang đăng nhập. Sử dụng mật khẩu để đăng nhập với tư cách `người dùng quản trị viên`.
 
+# **Lab 16: Blind SQL injection with out-of-band interaction**
+
 1. Truy cập trang đầu của cửa hàng và sử dụng Burp Suite để chặn và sửa đổi yêu cầu có chứa cookie `TrackingId`.
 2. Sửa đổi cookie `TrackingId`, thay đổi nó thành tải trọng sẽ kích hoạt tương tác với máy chủ Cộng tác viên. 
     
@@ -476,6 +508,8 @@ Sửa tham số `category` và gán cho nó giá trị `'+OR+1=1--`
 3. Nhấp chuột phải và chọn "`Insert Collaborator payload`" để chèn Burp Collaborator subdomain vào nơi được chỉ ra trong cookie `TrackingId` đã sửa đổi.
 4. Kết quả sẽ thấy 1 request đi từ database gọi tới collaborator server
 
+# **Lab 17: Blind SQL injection with out-of-band data exfiltration**
+
 1. Truy cập trang đầu của cửa hàng và sử dụng Burp Suite Professional để chặn và sửa đổi yêu cầu có chứa cookie `TrackingId`.
 2. Sửa đổi cookie `TrackingId`, thay đổi nó thành tải trọng sẽ làm rò rỉ mật khẩu của quản trị viên trong tương tác với máy chủ Cộng tác viên. Ví dụ, bạn có thể kết hợp SQL injection với các kỹ thuật XXE cơ bản như sau:
     
@@ -487,6 +521,8 @@ Sửa tham số `category` và gán cho nó giá trị `'+OR+1=1--`
 4. Chuyển đến tab Collaborator và nhấp vào "Poll Now". Nếu bạn không thấy bất kỳ tương tác nào được liệt kê, hãy đợi vài giây và thử lại, vì truy vấn phía máy chủ được thực thi không đồng bộ.
 5. Bạn sẽ thấy một số tương tác DNS và HTTP do ứng dụng bắt đầu do tải trọng của bạn. Mật khẩu của người dùng `quản trị viên` sẽ xuất hiện trong miền phụ của tương tác và bạn có thể xem mật khẩu này trong tab Cộng tác viên. Đối với tương tác DNS, tên miền đầy đủ đã được tra cứu được hiển thị trong tab Mô tả. Đối với tương tác HTTP, tên miền đầy đủ được hiển thị trong tiêu đề Máy chủ trong tab Yêu cầu cộng tác viên.
 6. Đăng nhập vào tài khoản administrator
+
+# Lab 18: **Lab: SQL injection with filter bypass via XML encoding**
 
 **Xác định lỗ hổng bảo mật**
 

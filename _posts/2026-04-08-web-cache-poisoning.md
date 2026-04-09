@@ -12,6 +12,8 @@ source_collection: notion_portswigger
 Created by: Nguyễn Giang Nam
 Topics: Advanced
 
+# **Lab 01: Web cache poisoning with an unkeyed header**
+
 **Lab 01: Đầu độc bộ nhớ đệm web (Web cache poisoning) với header không được dùng làm khóa (unkeyed header)**
 
 Lab này tồn tại lỗ hổng đầu độc bộ nhớ đệm web vì nó xử lý đầu vào từ một header không được dùng làm khóa (unkeyed header) theo cách không an toàn. Một người dùng bình thường thường xuyên truy cập trang chủ của trang web. Để giải quyết lab này, hãy đầu độc bộ nhớ đệm bằng một phản hồi thực thi lệnh alert(document.cookie) trên trình duyệt của người truy cập.

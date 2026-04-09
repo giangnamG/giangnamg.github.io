@@ -12,6 +12,8 @@ source_collection: notion_portswigger
 Created by: Nguyễn Giang Nam
 Topics: Advanced
 
+# **Lab 01: Modifying serialized objects**
+
 Bài lab này sử dụng cơ chế phiên làm việc (session mechanism) dựa trên serialization (tuần tự hóa) và kết quả là dính lỗ hổng leo thang đặc quyền. Để hoàn thành bài lab, hãy chỉnh sửa đối tượng đã được tuần tự hóa trong session cookie nhằm khai thác lỗ hổng này và giành quyền quản trị. Sau đó, xóa người dùng carlos.
 
 **Giải pháp**
@@ -22,6 +24,8 @@ Bài lab này sử dụng cơ chế phiên làm việc (session mechanism) dựa
 4. Gửi yêu cầu. Hãy chú ý rằng phản hồi (response) bây giờ đã chứa một liên kết đến bảng điều khiển quản trị tại /admin, cho thấy bạn đã truy cập được trang này với đặc quyền quản trị.
 5. Thay đổi đường dẫn (path) trong yêu cầu của bạn thành /admin và gửi lại. Hãy chú ý rằng trang /admin có chứa các liên kết để xóa các tài khoản người dùng cụ thể.
 6. Thay đổi đường dẫn trong yêu cầu của bạn thành /admin/delete?username=carlos và gửi yêu cầu để hoàn thành bài lab.
+
+# **Lab 02: Modifying serialized data types**
 
 Bài lab này sử dụng cơ chế phiên làm việc (session mechanism) dựa trên serialization (tuần tự hóa) và do đó dính lỗ hổng vượt qua xác thực (authentication bypass). Để hoàn thành bài lab, hãy chỉnh sửa đối tượng đã được tuần tự hóa trong session cookie để truy cập vào tài khoản quản trị viên. Sau đó, xóa người dùng carlos.
 
@@ -48,6 +52,8 @@ Lưu ý rằng hành vi so sánh của PHP có sự khác biệt giữa các phi
 5. Thay đổi đường dẫn (path) trong yêu cầu của bạn thành /admin và gửi lại. Hãy chú ý rằng trang /admin có chứa các liên kết để xóa các tài khoản người dùng cụ thể.
 6. Thay đổi đường dẫn trong yêu cầu của bạn thành /admin/delete?username=carlos và gửi yêu cầu để hoàn thành bài lab
 
+# **Lab 03: Using application functionality to exploit insecure deserialization**
+
 **Bài Lab: Sử dụng chức năng của ứng dụng để khai thác lỗ hổng giải tuần tự hóa không an toàn (insecure deserialization)**
 
 Bài lab này sử dụng cơ chế phiên làm việc (session mechanism) dựa trên serialization (tuần tự hóa). Một tính năng cụ thể sẽ gọi ra một phương thức nguy hiểm trên dữ liệu được cung cấp trong một đối tượng đã được tuần tự hóa. Để hoàn thành bài lab, hãy chỉnh sửa đối tượng đã tuần tự hóa trong session cookie và sử dụng nó để xóa tệp morale.txt khỏi thư mục home của Carlos.
@@ -65,6 +71,8 @@ Bạn cũng có quyền truy cập vào một tài khoản dự phòng: gregg:r
     
 5. Nhấp vào "Apply changes" (Áp dụng thay đổi). Đối tượng đã sửa đổi sẽ tự động được mã hóa lại và cập nhật vào trong yêu cầu.
 6. Thay đổi dòng yêu cầu (request line) thành POST /my-account/delete và gửi yêu cầu. Tài khoản của bạn sẽ bị xóa, cùng với tệp morale.txt của Carlos.
+
+# **Lab 04: Arbitrary object injection in PHP**
 
 **Bài Lab: Tiêm đối tượng tùy ý trong PHP (Arbitrary object injection in PHP)**
 
@@ -90,6 +98,8 @@ Bạn có thể đăng nhập vào tài khoản riêng của mình bằng cách 
 7. Gửi một yêu cầu có chứa session cookie tới **Burp Repeater**.
 8. Trong **Burp Repeater**, thay thế session cookie bằng chuỗi đã sửa đổi trong clipboard của bạn.
 9. Gửi yêu cầu. Phương thức magic __destruct() sẽ tự động được gọi và sẽ xóa tệp của Carlos.
+
+# **Lab 05: Exploiting Java deserialization with Apache Commons**
 
 Lab: Khai thác cơ chế deserialization Java với Apache Commons
 
@@ -156,6 +166,8 @@ java \
 3. Trong **Burp Repeater**, thay cookie session hiện tại của bạn bằng cookie độc hại vừa tạo. Chọn toàn bộ cookie rồi **URL-encode** nó.
 4. Gửi request để giải lab.
 
+# **Lab 06: Exploiting PHP deserialization with a pre-built gadget chain**
+
 **Lab: Khai thác lỗ hổng PHP deserialization với một gadget chain dựng sẵn**
 
 Lab này có cơ chế phiên (session) dựa trên serialization sử dụng cookie được ký (signed cookie). Nó cũng sử dụng một framework PHP phổ biến. Mặc dù bạn không có quyền truy cập mã nguồn, bạn vẫn có thể khai thác lỗ hổng insecure deserialization (deserialization không an toàn) của lab này bằng cách sử dụng các gadget chain (chuỗi công cụ) được dựng sẵn.
@@ -203,6 +215,8 @@ Bạn có thể đăng nhập vào tài khoản của mình bằng thông tin đ
     
 9. Trong **Burp Repeater**, thay thế session cookie của bạn bằng cookie độc hại mà bạn vừa tạo, sau đó gửi request để giải quyết lab.
 
+# **Lab 07: Exploiting Ruby deserialization using a documented gadget chain**
+
 **Lab: Khai thác lỗ hổng Ruby deserialization sử dụng một gadget chain đã được công bố**
 
 Bài lab này sử dụng cơ chế phiên (session) dựa trên serialization và framework Ruby on Rails. Có các mã khai thác (exploit) đã được công bố cho phép thực thi mã từ xa (RCE) thông qua một chuỗi gadget (gadget chain) trong framework này.
@@ -232,6 +246,8 @@ Hãy thử tìm kiếm cụm từ "ruby deserialization gadget chain" trên mạ
 4. Chạy script và sao chép đối tượng đã mã hóa Base64 thu được.
 5. Trong **Burp Repeater**, thay thế session cookie của bạn bằng cookie độc hại mà bạn vừa tạo, sau đó thực hiện **URL encode** (mã hóa URL) nó.
 6. Gửi request để giải quyết bài lab.
+
+# **Lab 08: Developing a custom gadget chain for Java deserialization**
 
 **Lab: Phát triển một gadget chain tùy chỉnh cho Java deserialization**
 
@@ -383,6 +399,8 @@ Có nhiều cách để trích xuất mật khẩu, nhưng đối với giải p
     ![{4D009927-18D4-43FC-A388-0424B150D55A}.png](/assets/img/portswigger/insecure-deserialization/4D009927-18D4-43FC-A388-0424B150D55A.png)
     
 
+# **Lab 09: Developing a custom gadget chain for PHP deserialization**
+
 **Lab: Phát triển một gadget chain tùy chỉnh cho PHP deserialization**
 
 Bài lab này sử dụng cơ chế phiên (session) dựa trên serialization. Bằng cách triển khai một gadget chain (chuỗi công cụ) tùy chỉnh, bạn có thể khai thác lỗ hổng insecure deserialization (deserialization không an toàn) của nó để đạt được khả năng thực thi mã từ xa (RCE). Để giải quyết bài lab, hãy xóa tệp morale.txt khỏi thư mục home của Carlos.
@@ -533,6 +551,8 @@ O:14:"CustomTemplate":2:{s:17:"default_desc_type";s:26:"rm /home/carlos/morale.t
 ```
 
 ![image.png](/assets/img/portswigger/insecure-deserialization/image%201.png)
+
+# **Lab 10: Using PHAR deserialization to deploy a custom gadget chain**
 
 **Lab: Sử dụng PHAR deserialization để triển khai một gadget chain tùy chỉnh**
 

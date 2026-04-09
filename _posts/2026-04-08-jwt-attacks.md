@@ -9,6 +9,8 @@ tags:
   - jwt-attacks
 source_collection: notion_portswigger
 ---
+# **I. JWT format**
+
 JWT bao gồm 3 phần: header, payload và signature. Mỗi cái này được phân tách bằng dấu chấm
 
 Phần header và payload của JWT là các đối tượng JSON được mã hóa base64url
@@ -18,6 +20,8 @@ Phần header và payload của JWT là các đối tượng JSON được mã h
 Vì chữ ký được lấy trực tiếp từ phần còn lại của mã thông báo nên việc thay đổi một byte của tiêu đề hoặc tải trọng sẽ dẫn đến chữ ký không khớp.
 
 Nếu không biết khóa ký bí mật của máy chủ thì sẽ không thể tạo chữ ký chính xác cho tiêu đề hoặc tải trọng nhất định.
+
+# **II. JWT attacks**
 
 - **1. Khai thác xác minh chữ ký JWT thiếu sót, Chấp nhận chữ ký tùy ý**
     
@@ -126,6 +130,8 @@ Nếu không biết khóa ký bí mật của máy chủ thì sẽ không thể 
         ```
         
 
+# Lab 01**: JWT authentication bypass via unverified signature**
+
 &gt; Mô tả
 Bài lab này sử dụng cơ chế dựa trên JWT để xử lý các phiên. Do lỗi trong việc triển khai, máy chủ không xác minh chữ ký của bất kỳ JWT nào mà nó nhận được.
 Để giải bài lab, hãy chỉnh sửa token phiên của bạn để truy cập vào bảng điều khiển quản trị ở `/admin` , sau đó xóa người dùng `carlos` .
@@ -154,6 +160,8 @@ Sửa trường sub trong ảnh từ user wiener sang user admin
 **Kết quả**
 
 ![image.png](/assets/img/portswigger/jwt-attacks/image%205.png)
+
+# **Lab 02: JWT authentication bypass via flawed signature verification**
 
 &gt; Mô tả
 Bài lab này sử dụng cơ chế dựa trên JWT để xử lý các phiên. Máy chủ được cấu hình không an toàn để chấp nhận JWT không có chữ ký.
@@ -207,6 +215,8 @@ Chung quy lại là khi `alg=none` mà backend với luồng verify như trên h
 Trong 1 vài trường hợp như trong bài lab, phải xóa phần signature trong JWT khi gửi đi
 
  
+
+# Lab 03: **JWT authentication bypass via weak signing key**
 
 &gt; Mô tả:
 Bài thực hành này sử dụng cơ chế dựa trên JWT để xử lý các phiên. Nó sử dụng một khóa bí mật cực kỳ yếu để ký và xác minh các token. Điều này có thể bị tấn công bằng phương pháp thử tất cả các khả năng với một danh sách từ các bí mật phổ biến.
@@ -286,6 +296,8 @@ Thay đổi trường `sub` thành `administrator`
     
 6. Trong phần phản hồi, tìm URL để xoá user **carlos** (`/admin/delete?username=carlos`). Gửi request tới endpoint này để hoàn thành bài lab.
 
+# **Lab 04: JWT authentication bypass via jwk header injection**
+
 &gt; Mô tả
 Bài thực hành này sử dụng cơ chế dựa trên JWT để xử lý các phiên. Máy chủ hỗ trợ tham số `jwk` trong tiêu đề JWT. Tham số này đôi khi được sử dụng để nhúng khóa xác thực đúng trực tiếp vào token. Tuy nhiên, nó không kiểm tra xem khóa được cung cấp có đến từ nguồn tin cậy hay không.
 
@@ -334,5 +346,7 @@ Bạn có thể đăng nhập vào tài khoản của mình bằng các thông t
 Thay vì sử dụng tính năng **Attack** có sẵn trong extension **JWT Editor**, bạn cũng có thể tự nhúng **JWK** bằng cách thêm thủ công tham số **jwk** vào phần **header** của JWT. Trong trường hợp này, bạn cũng cần cập nhật trường **kid** trong header sao cho nó khớp với **kid** của khóa đã nhúng.
 
 ## Phần 2 - Lý thuyết **JWT header parameter injections**
+
+# Lab 07: **JWT authentication bypass via algorithm confusion**
 
 ## Tổng quan

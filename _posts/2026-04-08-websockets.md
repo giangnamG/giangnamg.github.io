@@ -12,6 +12,8 @@ source_collection: notion_portswigger
 Created by: Nguyễn Giang Nam
 Topics: Client-side
 
+# Test 01: Bypass client side
+
 Payload ở phía client được encode html rồi mới gửi tới server, dẫn đến khi trả về cũng là encode html nên không gây ra XSS
 
 ![image.png](/assets/img/portswigger/websockets/image.png)
@@ -23,6 +25,8 @@ Khi repeat lại và gửi payload trực tiếp đến server, thì server khô
 ![image.png](/assets/img/portswigger/websockets/image%202.png)
 
 ![image.png](/assets/img/portswigger/websockets/image%203.png)
+
+# Test 02: Bypass việc server chặn ip tấn công
 
 1. Nhấp vào "live chat" và gửi tin nhắn trò chuyện. 
 2. Trong Burp Proxy, hãy chuyển đến tab WebSockets history và quan sát rằng tin nhắn trò chuyện đã được gửi qua WebSocket message.
@@ -50,6 +54,8 @@ Khi repeat lại và gửi payload trực tiếp đến server, thì server khô
     <iMg src=1 oNeRrOr=alert`1`>
     ```
     
+
+# Test 03: **WebSocket hijacking**
 
 **What is cross-site WebSocket hijacking?**
 

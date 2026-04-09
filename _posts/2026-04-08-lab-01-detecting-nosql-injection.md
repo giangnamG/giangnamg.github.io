@@ -10,8 +10,12 @@ tags:
   - labs
 source_collection: notion_portswigger
 ---
+# Mô tả
+
 Bộ lọc danh mục sản phẩm trong bài lab này hoạt động trên nền tảng cơ sở dữ liệu NoSQL MongoDB. Nó tồn tại lỗ hổng NoSQL injection.
 Để hoàn thành bài lab, hãy thực hiện một cuộc tấn công NoSQL injection khiến ứng dụng hiển thị các sản phẩm chưa được phát hành
+
+# Solve
 
 1. Trong trình duyệt của Burp, truy cập bài lab và nhấp vào một bộ lọc danh mục sản phẩm.
 2. Trong Burp, đi tới **Proxy &gt; HTTP history**. Nhấp chuột phải vào yêu cầu lọc danh mục (category filter request) và chọn **Send to Repeater**.

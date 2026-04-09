@@ -12,6 +12,8 @@ source_collection: notion_portswigger
 Created by: Nguyễn Giang Nam
 Topics: Advanced
 
+# Test 01: **Finding a hidden GraphQL endpoint**
+
 Các endpoint phổ biến:
 
 ```jsx
@@ -44,6 +46,8 @@ query{__typename}
 
 ![image.png](/assets/img/portswigger/graphql-api-vulnerabilities/image%201.png)
 
+# Test 02: **Probing for introspection**
+
 Kiểm tra xem introspection có đang enable hay không
 
 ```jsx
@@ -57,6 +61,8 @@ Kiểm tra xem introspection có đang enable hay không
 → Đang enable nhưng bị chặn
 
 **⇒ Nếu bị chặn như ảnh trên thì chuyển sang Test Case 04**
+
+# Test 03: Using **introspection**
 
 **Discovering schema information**
 
@@ -161,6 +167,8 @@ Kiểm tra xem introspection có đang enable hay không
 Trong giao diện **GraphQL → Chuột phải → Set introspection query**
 
 ![{579BB982-240F-4320-A2D6-CFC8CD04F7BF}.png](/assets/img/portswigger/graphql-api-vulnerabilities/579BB982-240F-4320-A2D6-CFC8CD04F7BF.png)
+
+# Test 04: Bypass **introspection defense**
 
 **Discovering schema information**
 
@@ -287,6 +295,8 @@ Sau đó thêm **introspection** vào sitemap: Trong giao diện **GraphQL → C
 
 ![image.png](/assets/img/portswigger/graphql-api-vulnerabilities/image%207.png)
 
+# Test 05: **Bypassing rate limiting using aliases**
+
 Đối tượng GraphQL không thể chứa nhiều thuộc tính có cùng tên. Ví dụ: truy vấn sau không hợp lệ vì nó cố gắng trả về loại sản phẩm hai lần.
 
 ```jsx
@@ -371,6 +381,8 @@ Bí danh cho phép bạn bỏ qua hạn chế này bằng cách đặt tên rõ 
     
     ![image.png](/assets/img/portswigger/graphql-api-vulnerabilities/image%2010.png)
     
+
+# Test 06: **GraphQL CSRF**
 
 Lỗ hổng giả mạo yêu cầu liên trang (CSRF) cho phép kẻ tấn công dụ dỗ người dùng thực hiện các hành động mà họ không có ý định thực hiện. Điều này được thực hiện bằng cách tạo một trang web độc hại giả mạo yêu cầu liên miền đến ứng dụng dễ bị tấn công.
 

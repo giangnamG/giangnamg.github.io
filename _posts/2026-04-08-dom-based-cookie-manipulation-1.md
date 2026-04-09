@@ -9,6 +9,8 @@ tags:
   - dom-based-vulnerabilities
 source_collection: notion_portswigger
 ---
+# **1. Giới thiệu**
+
 ### ✨ Mục tiêu bài học:
 
 - Hiểu khái niệm về lỗ hổng DOM-based cookie manipulation.

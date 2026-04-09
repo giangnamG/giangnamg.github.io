@@ -10,11 +10,15 @@ tags:
   - labs
 source_collection: notion_portswigger
 ---
+# Mô tả
+
 Phòng thí nghiệm này dễ bị tấn công smuggling yêu cầu CL.0. Máy chủ back-end bỏ qua tiêu đề `Content-Length` trên các yêu cầu đến một số điểm cuối.
 
 Để giải quyết phòng thí nghiệm, hãy xác định một điểm cuối dễ bị tấn công, chuyển một yêu cầu đến back-end để truy cập vào bảng quản trị tại `/admin`, sau đó xóa người dùng `carlos`.
 
 Phòng thí nghiệm này dựa trên các lỗ hổng trong thế giới thực được phát hiện bởi PortSwigger Research. Để biết thêm chi tiết, hãy xem [Browser-Powered Desync Attacks: A New Frontier in HTTP Request Smuggling](https://portswigger.net/research/browser-powered-desync-attacks#cl.0).
+
+# Solve
 
 ## **Thăm dò các điểm cuối dễ bị tấn công**
 

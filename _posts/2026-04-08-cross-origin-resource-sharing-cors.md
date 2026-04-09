@@ -9,9 +9,13 @@ tags:
   - cross-origin-resource-sharing-cors
 source_collection: notion_portswigger
 ---
+# 1. **CORS (cross-origin resource sharing) là gì?**
+
 là một cơ chế trình duyệt cho phép truy cập được kiểm soát vào các tài nguyên nằm ngoài một miền nhất định. Nó mở rộng và tăng thêm tính linh hoạt cho chính sách cùng nguồn gốc (SOP)
 
 ![image.png](/assets/img/portswigger/cross-origin-resource-sharing-cors/image.png)
+
+# 2. **Same-origin policy là gì ?**
 
 SOP hạn chế các tập lệnh trên một nguồn gốc khác đang cố gắng truy cập dữ liệu vào nguồn gốc hiện tại
 

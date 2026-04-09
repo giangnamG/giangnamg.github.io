@@ -13,11 +13,15 @@ Khi duyệt web, bạn gần như chắc chắn đã từng gặp các trang web
 
 Chủ đề này được viết dựa trên `PortSwigger` , cùng với bài báo [Hidden OAuth Attack Vectors.](https://portswigger.net/research/hidden-oauth-attack-vectors)
 
+# 1. **OAuth là gì?**
+
 **OAuth** là một framework ủy quyền được sử dụng rộng rãi, cho phép các trang web và ứng dụng web yêu cầu quyền truy cập giới hạn vào tài khoản người dùng trên một ứng dụng khác mà không cần tiết lộ thông tin đăng nhập của họ cho ứng dụng yêu cầu. OAuth cho phép người dùng kiểm soát chi tiết dữ liệu họ muốn chia sẻ thay vì phải trao quyền kiểm soát toàn bộ tài khoản cho bên thứ ba.
 
 Quy trình OAuth cơ bản được sử dụng phổ biến để tích hợp các chức năng của bên thứ ba mà yêu cầu truy cập vào một số dữ liệu nhất định từ tài khoản của người dùng. Ví dụ, một ứng dụng có thể dùng OAuth để truy cập danh sách liên hệ email của bạn, nhằm đề xuất những người có thể kết nối với bạn. Ngoài ra, OAuth cũng được sử dụng để cung cấp dịch vụ xác thực của bên thứ ba, cho phép người dùng đăng nhập bằng tài khoản của họ từ một trang web khác.
 
 **OAuth 2.0** là tiêu chuẩn hiện tại, nhưng một số trang web vẫn sử dụng phiên bản cũ hơn như **OAuth 1.0** OAuth 2.0 được viết lại hoàn toàn, không phát triển trực tiếp từ OAuth 1.0, vì vậy chúng rất khác nhau. Do đó, từ "OAuth" trong tài liệu chỉ đề cập đến OAuth 2.0.
+
+# 2. **OAuth 2.0 hoạt động như thế nào?**
 
 OAuth 2.0 được thiết kế để cho phép các ứng dụng khác nhau chia sẻ quyền truy cập vào dữ liệu người dùng một cách an toàn. Thay vì phải đưa toàn bộ thông tin tài khoản cho ứng dụng bên ngoài, OAuth 2.0 chỉ cấp một số quyền cụ thể mà người dùng đồng ý.
 
@@ -62,6 +66,8 @@ Có thể dùng sơ đồ sau để mô tả
 ```
 
 Có nhiều cách gọi là “flow” hoặc “grant type” để triển khai OAuth, như authorization code flow hay implicit flow. Tuy nhiên, hầu hết đều tuân theo 4 bước cơ bản trên.
+
+# 3. OAuth grant type
 
 “Grant type” trong OAuth quyết định **trình tự các bước** của quy trình cấp quyền (authorization process). Nó cũng ảnh hưởng đến cách mà ứng dụng client giao tiếp với dịch vụ OAuth ở từng giai đoạn, bao gồm cách “access token” (mã truy cập) được gửi. Do đó, “grant type” còn gọi là **OAuth flow**.
 
@@ -250,6 +256,8 @@ Resource server kiểm tra xem token có hợp lệ và thuộc về ứng dụn
 ```
 
 Ứng dụng client có thể sử dụng dữ liệu này theo mục đích của nó. Trong các tình huống đăng nhập OAuth, thông tin này thường được dùng để tạo session cho người dùng – tức là **đăng nhập người dùng một cách an toàn và liền mạch**.
+
+# 4 Sử dụng OAuth trong xác thực
 
 Ban đầu, OAuth không được thiết kế để **xác thực (authentication)** – nó chỉ nhằm **ủy quyền (authorization)**, tức là cho phép ứng dụng client truy cập một số dữ liệu của người dùng.
 

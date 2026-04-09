@@ -10,6 +10,8 @@ tags:
   - labs
 source_collection: notion_portswigger
 ---
+# Mô tả
+
 Phòng thí nghiệm này dễ bị tấn công request smuggling vì máy chủ front-end hạ cấp các yêu cầu HTTP/2 ngay cả khi chúng có độ dài không rõ ràng.
 
 Để giải bài tập thực hành, hãy thực hiện một cuộc tấn công đánh cắp yêu cầu (request smuggling) khiến trình duyệt của nạn nhân tải và thực thi một tệp JavaScript độc hại từ máy chủ khai thác, gọi hàm alert(document.cookie). Người dùng nạn nhân truy cập trang chủ cứ sau 10 giây.
@@ -17,6 +19,8 @@ Phòng thí nghiệm này dễ bị tấn công request smuggling vì máy chủ
 Bạn cần làm gián đoạn kết nối ngay trước khi trình duyệt của nạn nhân cố gắng nhập tài nguyên JavaScript.
 
 Nếu không, nó sẽ tải payload từ máy chủ khai thác nhưng không thực thi. Bạn có thể cần lặp lại cuộc tấn công nhiều lần trước khi tìm ra thời điểm chính xác.
+
+# Solve
 
 1. Xác nhận H2.CL, bằng việc gửi vài lần yêu cầu sau
     
