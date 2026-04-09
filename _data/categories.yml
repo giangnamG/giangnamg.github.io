@@ -1,5 +1,7 @@
 - name: PortSwigger
   slug: portswigger
+- name: Common Injection
+  slug: common-injection
 - name: HTB Challenge - Labs
   slug: htb-challenge-labs
 - name: HTB Machine - Labs
