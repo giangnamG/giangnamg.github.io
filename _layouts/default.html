@@ -33,6 +33,8 @@ layout: compress
               {% else %}
                 {{ content }}
               {% endif %}
+
+              {% include post-category-nav.html %}
             {% endcapture %}
 
             {% if site_protection_enabled %}

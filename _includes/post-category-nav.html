@@ -1,0 +1,132 @@
+{% assign primary_category = page.categories | first %}
+{% assign category_posts = site.categories[primary_category] %}
+
+{% if page.collection == 'posts' and primary_category and category_posts and category_posts.size > 1 %}
+  {% assign current_index = nil %}
+
+  {% for category_post in category_posts %}
+    {% if category_post.url == page.url %}
+      {% assign current_index = forloop.index0 %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+
+  {% if current_index != nil %}
+    {% assign previous_index = current_index | plus: 1 %}
+    {% assign next_index = current_index | minus: 1 %}
+    {% assign previous_post = nil %}
+    {% assign next_post = nil %}
+
+    {% for category_post in category_posts %}
+      {% if forloop.index0 == previous_index %}
+        {% assign previous_post = category_post %}
+      {% endif %}
+
+      {% if forloop.index0 == next_index %}
+        {% assign next_post = category_post %}
+      {% endif %}
+    {% endfor %}
+
+    {% if previous_post or next_post %}
+      <nav class="post-category-nav mt-5 pt-4 border-top" aria-label="Post navigation in category">
+        <div class="post-category-nav__grid{% unless previous_post and next_post %} post-category-nav__grid--single{% endunless %}">
+          {% if previous_post %}
+            <a class="post-category-nav__card post-category-nav__card--previous" href="{{ previous_post.url | relative_url }}">
+              <span class="post-category-nav__eyebrow">Previous in {{ primary_category }}</span>
+              <strong class="post-category-nav__title">{{ previous_post.title }}</strong>
+            </a>
+          {% else %}
+            <span class="post-category-nav__card post-category-nav__card--empty" aria-hidden="true"></span>
+          {% endif %}
+
+          {% if next_post %}
+            <a class="post-category-nav__card post-category-nav__card--next" href="{{ next_post.url | relative_url }}">
+              <span class="post-category-nav__eyebrow">Next in {{ primary_category }}</span>
+              <strong class="post-category-nav__title">{{ next_post.title }}</strong>
+            </a>
+          {% else %}
+            <span class="post-category-nav__card post-category-nav__card--empty" aria-hidden="true"></span>
+          {% endif %}
+        </div>
+      </nav>
+
+      <style>
+        .post-category-nav__grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 1rem;
+        }
+
+        .post-category-nav__card {
+          display: flex;
+          flex-direction: column;
+          gap: 0.45rem;
+          min-height: 100%;
+          padding: 1.1rem 1.15rem;
+          border: 1px solid var(--main-border-color);
+          border-radius: var(--card-border-radius, 1rem);
+          background: rgba(255, 255, 255, 0.015);
+          text-decoration: none;
+          transition:
+            border-color 0.2s ease,
+            background-color 0.2s ease,
+            transform 0.2s ease;
+        }
+
+        .post-category-nav__card:hover {
+          border-color: var(--link-color);
+          background: rgba(255, 255, 255, 0.03);
+          transform: translateY(-1px);
+          text-decoration: none;
+        }
+
+        .post-category-nav__card--empty {
+          visibility: hidden;
+          pointer-events: none;
+        }
+
+        .post-category-nav__eyebrow {
+          color: var(--text-muted-color);
+          font-size: 0.82rem;
+          letter-spacing: 0.01em;
+          text-transform: uppercase;
+        }
+
+        .post-category-nav__title {
+          color: var(--heading-color);
+          font-size: 1rem;
+          line-height: 1.45;
+        }
+
+        .post-category-nav__card--next {
+          text-align: right;
+          align-items: flex-end;
+        }
+
+        .post-category-nav__grid--single .post-category-nav__card {
+          grid-column: 1 / -1;
+        }
+
+        .post-category-nav__grid--single .post-category-nav__card--next {
+          text-align: left;
+          align-items: flex-start;
+        }
+
+        @media (max-width: 767.98px) {
+          .post-category-nav__grid {
+            grid-template-columns: 1fr;
+          }
+
+          .post-category-nav__card--next {
+            text-align: left;
+            align-items: flex-start;
+          }
+
+          .post-category-nav__card--empty {
+            display: none;
+          }
+        }
+      </style>
+    {% endif %}
+  {% endif %}
+{% endif %}
