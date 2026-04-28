@@ -37,6 +37,7 @@
     records: [],
     uiOpen: false
   };
+  const searchableBlockSelector = 'h1, h2, h3, h4, h5, h6, p, li, blockquote, pre code, td, th';
   const classNames = {
     hidden: 'd-none',
     visible: 'd-block',
@@ -65,6 +66,47 @@
       .toLowerCase()
       .replace(/\s+/g, ' ')
       .trim();
+
+  const hashNormalizedText = (value) => {
+    const normalized = normalizeText(value);
+    let hash = 0x811c9dc5;
+
+    for (let index = 0; index < normalized.length; index += 1) {
+      hash ^= normalized.charCodeAt(index);
+      hash = Math.imul(hash, 0x01000193) >>> 0;
+    }
+
+    return hash.toString(16).padStart(8, '0');
+  };
+
+  const buildSearchTargetHash = (query, record) => {
+    const params = new URLSearchParams();
+    params.set('spq', query.trim());
+    params.set('spm', record.blockHash);
+    params.set('spb', String(record.blockIndex));
+    return `#${params.toString()}`;
+  };
+
+  const parseSearchTargetHash = () => {
+    if (!window.location.hash || !window.location.hash.startsWith('#')) {
+      return null;
+    }
+
+    const params = new URLSearchParams(window.location.hash.slice(1));
+    const query = params.get('spq') || '';
+    const matchHash = params.get('spm') || '';
+    const blockIndexValue = params.get('spb');
+    const blockIndex =
+      blockIndexValue !== null && blockIndexValue !== '' && Number.isFinite(Number(blockIndexValue))
+        ? Number(blockIndexValue)
+        : null;
+
+    if (!query && !matchHash && blockIndex === null) {
+      return null;
+    }
+
+    return { query, matchHash, blockIndex };
+  };
 
   const getCachedPassphrase = () => {
     try {
@@ -261,6 +303,181 @@
     return output;
   };
 
+  const getSearchableBlocks = () =>
+    Array.from(content.querySelectorAll(searchableBlockSelector)).filter(
+      (element) => normalizeText(element.textContent).length > 0
+    );
+
+  const blockMatchesQuery = (text, phrase, terms) => {
+    const haystack = normalizeText(text);
+    if (!haystack) {
+      return false;
+    }
+
+    if (phrase && haystack.includes(phrase)) {
+      return true;
+    }
+
+    return terms.length > 0 && terms.every((term) => haystack.includes(term));
+  };
+
+  const clearSearchTargetHighlights = () => {
+    content.querySelectorAll('.site-search-target').forEach((element) => {
+      element.classList.remove('site-search-target');
+    });
+
+    content.querySelectorAll('mark.site-search-hit').forEach((mark) => {
+      const parent = mark.parentNode;
+      if (!parent) {
+        return;
+      }
+
+      parent.replaceChild(document.createTextNode(mark.textContent || ''), mark);
+      parent.normalize();
+    });
+  };
+
+  const highlightTextNodes = (root, terms) => {
+    const filteredTerms = Array.from(new Set(terms.filter(Boolean))).sort((left, right) => right.length - left.length);
+    if (!filteredTerms.length) {
+      return;
+    }
+
+    const pattern = new RegExp(`(${filteredTerms.map(escapeRegex).join('|')})`, 'ig');
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+      acceptNode(node) {
+        if (!node.textContent || !node.textContent.trim()) {
+          return NodeFilter.FILTER_REJECT;
+        }
+
+        if (node.parentElement && node.parentElement.closest('mark.site-search-hit')) {
+          return NodeFilter.FILTER_REJECT;
+        }
+
+        return NodeFilter.FILTER_ACCEPT;
+      }
+    });
+
+    const textNodes = [];
+    while (walker.nextNode()) {
+      textNodes.push(walker.currentNode);
+    }
+
+    textNodes.forEach((node) => {
+      const text = node.textContent || '';
+      if (!pattern.test(text)) {
+        pattern.lastIndex = 0;
+        return;
+      }
+
+      pattern.lastIndex = 0;
+      const fragment = document.createDocumentFragment();
+      let lastIndex = 0;
+
+      text.replace(pattern, (match, _group, offset) => {
+        if (offset > lastIndex) {
+          fragment.appendChild(document.createTextNode(text.slice(lastIndex, offset)));
+        }
+
+        const mark = document.createElement('mark');
+        mark.className = 'site-search-hit';
+        mark.textContent = match;
+        fragment.appendChild(mark);
+        lastIndex = offset + match.length;
+        return match;
+      });
+
+      if (lastIndex < text.length) {
+        fragment.appendChild(document.createTextNode(text.slice(lastIndex)));
+      }
+
+      node.parentNode.replaceChild(fragment, node);
+    });
+  };
+
+  const resolveSearchTargetElement = ({ query, matchHash, blockIndex }) => {
+    const phrase = normalizeText(query);
+    const terms = Array.from(new Set(phrase.split(/\s+/).filter(Boolean)));
+    const blocks = getSearchableBlocks();
+
+    if (!blocks.length) {
+      return null;
+    }
+
+    if (Number.isInteger(blockIndex) && blockIndex >= 0 && blockIndex < blocks.length) {
+      const indexedBlock = blocks[blockIndex];
+      if (
+        !matchHash ||
+        hashNormalizedText(indexedBlock.textContent) === matchHash ||
+        blockMatchesQuery(indexedBlock.textContent, phrase, terms)
+      ) {
+        return indexedBlock;
+      }
+
+      const searchRadius = 4;
+      for (let offset = 1; offset <= searchRadius; offset += 1) {
+        const candidates = [blockIndex - offset, blockIndex + offset];
+
+        for (const candidateIndex of candidates) {
+          if (candidateIndex < 0 || candidateIndex >= blocks.length) {
+            continue;
+          }
+
+          const candidate = blocks[candidateIndex];
+          if (
+            (matchHash && hashNormalizedText(candidate.textContent) === matchHash) ||
+            blockMatchesQuery(candidate.textContent, phrase, terms)
+          ) {
+            return candidate;
+          }
+        }
+      }
+    }
+
+    if (matchHash) {
+      const exactMatch = blocks.find((element) => hashNormalizedText(element.textContent) === matchHash);
+      if (exactMatch) {
+        return exactMatch;
+      }
+    }
+
+    const contentMatches = blocks.filter((element) => blockMatchesQuery(element.textContent, phrase, terms));
+    if (!contentMatches.length) {
+      return null;
+    }
+
+    return contentMatches[0];
+  };
+
+  const revealSearchTargetFromLocation = () => {
+    const target = parseSearchTargetHash();
+    if (!target) {
+      return;
+    }
+
+    const searchTargetElement = resolveSearchTargetElement(target);
+    if (!searchTargetElement) {
+      return;
+    }
+
+    clearSearchTargetHighlights();
+    searchTargetElement.classList.add('site-search-target');
+    highlightTextNodes(
+      searchTargetElement,
+      Array.from(new Set(normalizeText(target.query).split(/\s+/).filter(Boolean)))
+    );
+
+    const scrollTarget =
+      searchTargetElement.closest('figure.highlight') ||
+      searchTargetElement.closest('.highlight') ||
+      searchTargetElement.closest('pre') ||
+      searchTargetElement;
+
+    requestAnimationFrame(() => {
+      scrollTarget.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+  };
+
   const buildSnippet = (record, phrase, terms) => {
     const source = record.content || '';
     const haystack = record.contentNorm || '';
@@ -307,11 +524,10 @@
 
     return searchState.records
       .map((record) => {
-        const combined = `${record.titleNorm} ${record.categoriesNorm} ${record.tagsNorm} ${record.contentNorm}`;
-        const fullPhraseMatch = combined.includes(phrase);
-        const termMatches = terms.filter((term) => combined.includes(term));
+        const contentMatchesPhrase = phrase && record.contentNorm.includes(phrase);
+        const contentTermMatches = terms.filter((term) => record.contentNorm.includes(term));
 
-        if (!fullPhraseMatch && termMatches.length === 0) {
+        if (!contentMatchesPhrase && contentTermMatches.length === 0) {
           return null;
         }
 
@@ -325,11 +541,11 @@
           score += 140;
         }
 
-        if (record.contentNorm.includes(phrase)) {
-          score += 80;
+        if (contentMatchesPhrase) {
+          score += 160;
         }
 
-        termMatches.forEach((term) => {
+        contentTermMatches.forEach((term) => {
           if (record.titleNorm.includes(term)) {
             score += 55;
           }
@@ -343,7 +559,7 @@
           }
         });
 
-        if (termMatches.length === terms.length) {
+        if (contentTermMatches.length === terms.length) {
           score += 45;
         }
 
@@ -398,6 +614,7 @@
 
     searchResults.innerHTML = ranked
       .map(({ record }) => {
+        const href = `${record.url}${buildSearchTargetHash(query, record)}`;
         const categories = record.categories
           ? `<div class="me-sm-4"><i class="far fa-folder fa-fw"></i>${highlightMatches(record.categories, terms)}</div>`
           : '';
@@ -406,14 +623,16 @@
           : '';
 
         return `
-          <article class="px-1 px-sm-2 px-lg-4 px-xl-0">
-            <header>
-              <h2><a href="${escapeHtml(record.url)}">${highlightMatches(record.title, terms)}</a></h2>
+          <article class="site-search-result px-1 px-sm-2 px-lg-4 px-xl-0">
+            <a class="site-search-result-link" data-protected-search-result="true" href="${escapeHtml(href)}">
+              <header>
+                <h2 class="site-search-result-title">${highlightMatches(record.title, terms)}</h2>
+              </header>
               <div class="post-meta d-flex flex-column flex-sm-row text-muted mt-1 mb-1">
                 ${categories} ${tags}
               </div>
-            </header>
-            <p>${highlightMatches(buildSnippet(record, normalizedQuery, terms), terms)}</p>
+              <p class="site-search-result-snippet mb-0">${highlightMatches(buildSnippet(record, normalizedQuery, terms), terms)}</p>
+            </a>
           </article>
         `;
       })
@@ -455,6 +674,29 @@
       renderSearchResults(searchInput.value);
     });
 
+    searchResults.addEventListener('click', (event) => {
+      const link = event.target.closest('a[data-protected-search-result="true"]');
+      if (!link) {
+        return;
+      }
+
+      const targetUrl = new URL(link.href, window.location.origin);
+      if (targetUrl.pathname !== window.location.pathname) {
+        return;
+      }
+
+      event.preventDefault();
+      closeProtectedSearchUi();
+      window.location.hash = targetUrl.hash;
+      revealSearchTargetFromLocation();
+    });
+
+    window.addEventListener('hashchange', () => {
+      if (document.body.classList.contains('site-unlocked')) {
+        revealSearchTargetFromLocation();
+      }
+    });
+
     searchState.bound = true;
   };
 
@@ -483,6 +725,8 @@
 
         searchState.records = records.map((record) => ({
           ...record,
+          blockHash: record.block_hash || record.blockHash || '',
+          blockIndex: Number(record.block_index ?? record.blockIndex ?? -1),
           titleNorm: normalizeText(record.title),
           categoriesNorm: normalizeText(record.categories),
           tagsNorm: normalizeText(record.tags),
@@ -509,6 +753,7 @@
     content.hidden = false;
     document.body.classList.add('site-unlocked');
     await initializeProtectedSearch(passphrase);
+    revealSearchTargetFromLocation();
     document.dispatchEvent(
       new CustomEvent('site-protection:unlocked', {
         detail: { passphrase }

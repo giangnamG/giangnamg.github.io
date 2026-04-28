@@ -1,6 +1,70 @@
 <div id="search-result-wrapper" class="d-none d-flex justify-content-center">
   <div class="col-12 col-lg-11 col-xl-9 px-md-4">
     <div class="content">
+      <style>
+        #search-results .site-search-result {
+          width: 100%;
+        }
+
+        #search-results .site-search-result-link {
+          display: block;
+          padding: 1rem 1.1rem;
+          border: 1px solid var(--main-border-color);
+          border-radius: 1rem;
+          background: color-mix(in srgb, var(--card-bg, var(--main-bg)) 84%, transparent);
+          text-decoration: none;
+          font-size: inherit !important;
+          transition: border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+        }
+
+        #search-results .site-search-result-link:hover {
+          border-color: var(--link-color);
+          transform: translateY(-1px);
+          box-shadow: 0 0.8rem 1.8rem rgba(0, 0, 0, 0.12);
+        }
+
+        #search-results .site-search-result-title {
+          margin: 0;
+          color: var(--heading-color);
+          font-size: 1.45rem;
+          line-height: 1.35;
+        }
+
+        #search-results .site-search-result-snippet {
+          color: var(--text-muted-color);
+          white-space: break-spaces;
+          display: -webkit-box;
+          -webkit-line-clamp: 4;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+
+        .site-search-target {
+          scroll-margin-top: 6rem;
+          border-left: 3px solid var(--link-color);
+          padding-left: 0.9rem;
+          margin-left: -1rem;
+          border-radius: 0.75rem;
+          background: color-mix(in srgb, var(--link-color) 10%, transparent);
+        }
+
+        mark.site-search-hit {
+          background: #ffe66d;
+          color: #111;
+          border-radius: 0.2rem;
+          padding: 0 0.12rem;
+        }
+
+        @media (max-width: 849px) {
+          #search-results .site-search-result-link {
+            padding: 0.95rem 0.95rem;
+          }
+
+          #search-results .site-search-result-title {
+            font-size: 1.2rem;
+          }
+        }
+      </style>
       <div id="search-hints" class="text-muted mt-3">
         {% if site.site_protection.enabled %}
           <p class="mb-0">Search is available after the site is unlocked. Results match full text across posts and pages.</p>

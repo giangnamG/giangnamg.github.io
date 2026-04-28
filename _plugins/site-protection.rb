@@ -93,18 +93,23 @@ module SiteProtection
   def build_protected_search_index(site)
     records = searchable_documents(site).map do |document|
       title = search_title_for(document)
-      content = search_content_for(document)
+      blocks = search_blocks_for(document)
 
-      next if title.empty? || content.empty?
+      next if title.empty? || blocks.empty?
 
-      {
-        "title" => title,
-        "url" => document.url,
-        "content" => content,
-        "categories" => Array(document.data["categories"]).join(", "),
-        "tags" => Array(document.data["tags"]).join(", ")
-      }
+      blocks.each_with_index.map do |block, index|
+        {
+          "title" => title,
+          "url" => document.url,
+          "content" => block,
+          "categories" => Array(document.data["categories"]).join(", "),
+          "tags" => Array(document.data["tags"]).join(", "),
+          "block_hash" => normalized_block_hash(block),
+          "block_index" => index
+        }
+      end
     end.compact
+    records.flatten!(1)
 
     records.select! do |record|
       url = record["url"].to_s
@@ -125,6 +130,63 @@ module SiteProtection
 
     fallback = File.basename(document.path.to_s, File.extname(document.path.to_s))
     fallback.tr("-_", " ").strip
+  end
+
+  def search_blocks_for(document)
+    cached = document.data["protected_search_blocks"]
+    return cached if cached.is_a?(Array) && !cached.empty?
+
+    html = document.content.to_s
+    return [] if html.empty?
+
+    search_blocks_from_html(html)
+  end
+
+  def search_blocks_from_html(html)
+    blocks = html.scan(%r{<(h[1-6]|p|li|blockquote|pre|td|th)\b[^>]*>(.*?)</\1>}mi).map do |_tag, inner_html|
+      clean_search_block(inner_html.gsub(%r{<br\s*/?>}i, "\n"))
+    end
+
+    blocks.reject(&:empty?).uniq
+  end
+
+  def cache_rendered_search_blocks(document)
+    html = document.output.to_s
+    return if html.empty?
+
+    document.data["protected_search_blocks"] = search_blocks_from_html(html)
+  end
+
+  def normalized_block_hash(text)
+    normalized = normalize_search_text(text)
+    hash = 0x811c9dc5
+
+    normalized.each_byte do |byte|
+      hash ^= byte
+      hash = (hash * 0x01000193) & 0xffffffff
+    end
+
+    hash.to_s(16).rjust(8, "0")
+  end
+
+  def normalize_search_text(text)
+    text.to_s.downcase.gsub(/\s+/, " ").strip
+  end
+
+  def clean_search_block(text)
+    cleaned = text.to_s.dup
+    cleaned.gsub!(%r!\{\%.*?\%\}!m, " ")
+    cleaned.gsub!(%r!\{\{.*?\}\}!m, " ")
+    cleaned.gsub!(%r!`([^`]+)`!, " \\1 ")
+    cleaned.gsub!(%r!\!\[([^\]]*)\]\([^)]+\)!, " \\1 ")
+    cleaned.gsub!(%r!\[([^\]]+)\]\([^)]+\)!, " \\1 ")
+    cleaned.gsub!(%r!<style.*?>.*?</style>!mi, " ")
+    cleaned.gsub!(%r!<script.*?>.*?</script>!mi, " ")
+    cleaned.gsub!(%r!<[^>]+>!, " ")
+    cleaned = CGI.unescapeHTML(cleaned)
+    cleaned.gsub!(/[ \t\f\v]+/, " ")
+    cleaned.gsub!(/\s+/, " ")
+    cleaned.strip
   end
 
   def search_content_for(document)
@@ -216,6 +278,18 @@ module SiteProtectionFilter
 end
 
 Liquid::Template.register_filter(SiteProtectionFilter)
+
+Jekyll::Hooks.register :documents, :post_render do |document|
+  next unless SiteProtection.enabled?(document.site)
+
+  SiteProtection.cache_rendered_search_blocks(document)
+end
+
+Jekyll::Hooks.register :pages, :post_render do |page|
+  next unless SiteProtection.enabled?(page.site)
+
+  SiteProtection.cache_rendered_search_blocks(page)
+end
 
 Jekyll::Hooks.register :site, :post_write do |site|
   next unless SiteProtection.enabled?(site)
