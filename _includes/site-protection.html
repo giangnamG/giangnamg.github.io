@@ -2,23 +2,51 @@
 
 <section class="site-protection-shell">
   <div class="site-protection-card" id="site-protection-gate">
+    <div class="site-protection-badge">
+      <span class="site-protection-badge-dot"></span>
+      Encrypted Access
+    </div>
+
     <h1 class="site-protection-title">Protected Site</h1>
     <p class="site-protection-text">
-      This page is encrypted in the browser. Enter the passphrase to unlock it.
+      Content is encrypted client-side and decrypted in your browser after you enter the passphrase.
     </p>
 
     <form id="site-protection-form" class="site-protection-form">
       <label class="site-protection-label" for="site-protection-passphrase">Passphrase</label>
-      <input
-        id="site-protection-passphrase"
-        class="form-control"
-        type="password"
-        autocomplete="current-password"
-        spellcheck="false"
-        required
-      >
-      <button type="submit" class="btn btn-primary">Unlock</button>
+
+      <div class="site-protection-input-row">
+        <input
+          id="site-protection-passphrase"
+          class="form-control"
+          type="password"
+          autocomplete="current-password"
+          spellcheck="false"
+          required
+        >
+        <button
+          id="site-protection-toggle"
+          class="site-protection-toggle"
+          type="button"
+          aria-label="Show passphrase"
+          aria-pressed="false"
+        >
+          Show
+        </button>
+      </div>
+
+      <label class="site-protection-remember">
+        <input id="site-protection-remember" type="checkbox">
+        <span>Remember for this browser tab</span>
+      </label>
+
+      <button type="submit" class="btn btn-primary site-protection-submit">Unlock</button>
     </form>
+
+    <p class="site-protection-footnote">
+      The passphrase is not embedded in the page source. If you enable “Remember”, it is stored only in
+      `sessionStorage` for this tab.
+    </p>
 
     <p id="site-protection-error" class="site-protection-error" hidden></p>
   </div>
@@ -34,44 +62,176 @@
 
 <style>
   .site-protection-shell {
-    max-width: 48rem;
-    margin: 4rem auto;
+    max-width: 44rem;
+    margin: 5rem auto 3rem;
   }
 
   .site-protection-card {
-    padding: 2rem;
-    border: 1px solid var(--main-border-color, rgba(255, 255, 255, 0.12));
-    border-radius: 1rem;
-    background: var(--card-bg, var(--main-bg));
-    box-shadow: var(--card-shadow, none);
+    position: relative;
+    overflow: hidden;
+    padding: 2.25rem;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 1.25rem;
+    background:
+      radial-gradient(circle at top left, rgba(72, 132, 255, 0.14), transparent 32%),
+      radial-gradient(circle at bottom right, rgba(114, 219, 188, 0.08), transparent 28%),
+      rgba(22, 23, 27, 0.94);
+    box-shadow:
+      0 18px 60px rgba(0, 0, 0, 0.28),
+      inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(10px);
+  }
+
+  .site-protection-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.35rem 0.75rem;
+    border: 1px solid rgba(105, 143, 255, 0.24);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.03);
+    color: #8fb2ff;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+  }
+
+  .site-protection-badge-dot {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #6ea8fe, #4de2b1);
+    box-shadow: 0 0 16px rgba(110, 168, 254, 0.45);
   }
 
   .site-protection-title {
-    margin-bottom: 0.75rem;
+    margin: 1.1rem 0 0.75rem;
+    font-size: clamp(2rem, 4vw, 3rem);
+    line-height: 1.04;
   }
 
   .site-protection-text {
     color: var(--text-muted-color);
-    margin-bottom: 1.25rem;
+    margin-bottom: 1.5rem;
+    max-width: 38rem;
+    font-size: 1.02rem;
   }
 
   .site-protection-form {
     display: grid;
-    gap: 0.9rem;
+    gap: 1rem;
   }
 
   .site-protection-label {
     font-weight: 600;
+    color: var(--heading-color);
+  }
+
+  .site-protection-input-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.75rem;
+    align-items: stretch;
+  }
+
+  .site-protection-input-row .form-control {
+    min-height: 3.3rem;
+    border-radius: 0.9rem;
+    border: 1px solid rgba(118, 138, 170, 0.32);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-color);
+    box-shadow: none;
+  }
+
+  .site-protection-input-row .form-control:focus {
+    border-color: rgba(110, 168, 254, 0.72);
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.18);
+    background: rgba(255, 255, 255, 0.07);
+  }
+
+  .site-protection-toggle {
+    min-width: 5.5rem;
+    border: 1px solid rgba(118, 138, 170, 0.32);
+    border-radius: 0.9rem;
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-color);
+    font-weight: 600;
+    transition: background-color 160ms ease, border-color 160ms ease, transform 160ms ease;
+  }
+
+  .site-protection-toggle:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(143, 178, 255, 0.42);
+  }
+
+  .site-protection-toggle:active {
+    transform: translateY(1px);
+  }
+
+  .site-protection-remember {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.65rem;
+    color: var(--text-muted-color);
+    font-size: 0.95rem;
+    user-select: none;
+  }
+
+  .site-protection-remember input {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .site-protection-submit {
+    min-height: 3rem;
+    border: 0;
+    border-radius: 0.95rem;
+    background: linear-gradient(135deg, #2d7df6, #1f6aea 55%, #3e96ff);
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    box-shadow: 0 14px 26px rgba(31, 106, 234, 0.22);
+  }
+
+  .site-protection-submit:hover {
+    filter: brightness(1.05);
+  }
+
+  .site-protection-footnote {
+    margin: 1rem 0 0;
+    color: var(--text-muted-color);
+    font-size: 0.9rem;
+    line-height: 1.55;
   }
 
   .site-protection-error {
     margin-top: 1rem;
     color: #dc3545;
+    font-weight: 600;
   }
 
   body.site-protected #search-trigger,
   body.site-protected #search,
   body.site-protected #search-cancel {
     display: none !important;
+  }
+
+  @media (max-width: 640px) {
+    .site-protection-shell {
+      margin-top: 2.5rem;
+    }
+
+    .site-protection-card {
+      padding: 1.4rem;
+      border-radius: 1rem;
+    }
+
+    .site-protection-input-row {
+      grid-template-columns: 1fr;
+    }
+
+    .site-protection-toggle {
+      min-height: 2.9rem;
+    }
   }
 </style>

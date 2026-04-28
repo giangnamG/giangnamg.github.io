@@ -3,6 +3,8 @@
   const payloadNode = document.getElementById('site-protection-payload');
   const form = document.getElementById('site-protection-form');
   const input = document.getElementById('site-protection-passphrase');
+  const remember = document.getElementById('site-protection-remember');
+  const toggle = document.getElementById('site-protection-toggle');
   const error = document.getElementById('site-protection-error');
   const gate = document.getElementById('site-protection-gate');
   const content = document.getElementById('site-protection-content');
@@ -82,7 +84,6 @@
 
   const unlock = async (passphrase) => {
     const html = await decryptPayload(passphrase);
-    sessionStorage.setItem(config.sessionKey, passphrase);
     content.innerHTML = html;
     runInlineScripts(content);
     gate.hidden = true;
@@ -90,9 +91,14 @@
     document.dispatchEvent(new CustomEvent('site-protection:unlocked'));
   };
 
-  const tryUnlock = async (passphrase, { silent = false } = {}) => {
+  const tryUnlock = async (passphrase, { silent = false, persist = false } = {}) => {
     try {
       await unlock(passphrase);
+      if (persist) {
+        sessionStorage.setItem(config.sessionKey, passphrase);
+      } else {
+        sessionStorage.removeItem(config.sessionKey);
+      }
       error.hidden = true;
       error.textContent = '';
       return true;
@@ -109,17 +115,35 @@
 
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
-    await tryUnlock(input.value);
+    await tryUnlock(input.value, { persist: remember ? remember.checked : false });
   });
+
+  if (toggle) {
+    toggle.addEventListener('click', () => {
+      const nextType = input.type === 'password' ? 'text' : 'password';
+      input.type = nextType;
+      const isVisible = nextType === 'text';
+      toggle.textContent = isVisible ? 'Hide' : 'Show';
+      toggle.setAttribute('aria-label', isVisible ? 'Hide passphrase' : 'Show passphrase');
+      toggle.setAttribute('aria-pressed', isVisible ? 'true' : 'false');
+    });
+  }
 
   const storedPassphrase = sessionStorage.getItem(config.sessionKey);
 
   if (storedPassphrase) {
     input.value = storedPassphrase;
-    const unlocked = await tryUnlock(storedPassphrase, { silent: true });
+    if (remember) {
+      remember.checked = true;
+    }
+
+    const unlocked = await tryUnlock(storedPassphrase, { silent: true, persist: true });
 
     if (!unlocked) {
       input.value = '';
+      if (remember) {
+        remember.checked = false;
+      }
       input.focus();
     }
   } else {
