@@ -78,6 +78,10 @@ module SiteProtection
     return false if url.empty?
     return false if url == "/404.html"
     return false if url.match?(%r{^/page\d+/?$})
+    return false if url.start_with?("/assets/")
+
+    output_ext = document.respond_to?(:output_ext) ? document.output_ext.to_s : File.extname(url)
+    return false unless output_ext == ".html"
 
     layout = document.data["layout"].to_s
     return false if %w[home category tag categories tags archives].include?(layout)
@@ -101,6 +105,15 @@ module SiteProtection
         "tags" => Array(document.data["tags"]).join(", ")
       }
     end.compact
+
+    records.select! do |record|
+      url = record["url"].to_s
+      next false if url.empty?
+      next false if url.start_with?("/assets/")
+      next false if url.match?(/\.(json|xml|txt)\z/i)
+
+      true
+    end
 
     records.sort_by! { |record| record["title"].downcase }
     records.to_json
