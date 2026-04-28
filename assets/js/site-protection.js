@@ -688,7 +688,7 @@
           : '';
 
         return `
-          <article class="site-search-result px-1 px-sm-2 px-lg-4 px-xl-0">
+          <article class="site-search-result">
             <a class="site-search-result-link" data-protected-search-result="true" href="${escapeHtml(href)}">
               <header>
                 <h2 class="site-search-result-title">${highlightMatches(record.title, terms)}</h2>

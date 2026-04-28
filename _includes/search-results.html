@@ -4,10 +4,15 @@
       <style>
         #search-results {
           align-items: stretch;
+          width: 100%;
         }
 
         #search-results .site-search-result {
           width: 100%;
+          max-width: 100%;
+          box-sizing: border-box;
+          margin: 0;
+          padding: 0 !important;
         }
 
         #search-results .site-search-result-link {
@@ -26,6 +31,9 @@
           background: color-mix(in srgb, var(--card-bg, var(--main-bg)) 84%, transparent);
           text-decoration: none;
           font-size: inherit !important;
+          width: 100%;
+          max-width: 100%;
+          box-sizing: border-box;
           transition: border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
         }
 
@@ -38,6 +46,10 @@
         #search-results .site-search-result-link > header {
           grid-area: title;
           margin: 0;
+          min-width: 0;
+        }
+
+        #search-results .site-search-result-link > * {
           min-width: 0;
         }
 
