@@ -1,22 +1,65 @@
 (async () => {
   const configNode = document.getElementById('site-protection-config');
   const payloadNode = document.getElementById('site-protection-payload');
+  const shell = document.getElementById('site-protection-shell');
+  const loading = document.getElementById('site-protection-loading');
   const form = document.getElementById('site-protection-form');
   const input = document.getElementById('site-protection-passphrase');
-  const remember = document.getElementById('site-protection-remember');
   const toggle = document.getElementById('site-protection-toggle');
   const error = document.getElementById('site-protection-error');
   const gate = document.getElementById('site-protection-gate');
   const content = document.getElementById('site-protection-content');
 
-  if (!configNode || !payloadNode || !form || !input || !error || !gate || !content) {
+  if (!configNode || !payloadNode || !form || !input || !error || !gate || !content || !shell) {
     return;
   }
 
   const config = JSON.parse(configNode.textContent);
   const payload = JSON.parse(payloadNode.textContent);
+  const cacheTtlMs = Number(config.cacheTtlMs) || 3600000;
   const textEncoder = new TextEncoder();
   const textDecoder = new TextDecoder();
+  const now = () => Date.now();
+
+  const finishLoading = () => {
+    shell.classList.remove('is-loading');
+    if (loading) {
+      loading.hidden = true;
+    }
+  };
+
+  const getCachedPassphrase = () => {
+    try {
+      const raw = localStorage.getItem(config.sessionKey);
+      if (!raw) {
+        return null;
+      }
+
+      const cached = JSON.parse(raw);
+      if (!cached.passphrase || !cached.expiresAt || cached.expiresAt <= now()) {
+        localStorage.removeItem(config.sessionKey);
+        return null;
+      }
+
+      return cached.passphrase;
+    } catch {
+      localStorage.removeItem(config.sessionKey);
+      return null;
+    }
+  };
+
+  const setCachedPassphrase = (passphrase) => {
+    const payloadValue = {
+      passphrase,
+      expiresAt: now() + cacheTtlMs
+    };
+
+    localStorage.setItem(config.sessionKey, JSON.stringify(payloadValue));
+  };
+
+  const clearCachedPassphrase = () => {
+    localStorage.removeItem(config.sessionKey);
+  };
 
   const decodeBase64 = (value) => Uint8Array.from(atob(value), (char) => char.charCodeAt(0));
 
@@ -91,16 +134,17 @@
     document.dispatchEvent(new CustomEvent('site-protection:unlocked'));
   };
 
-  const tryUnlock = async (passphrase, { silent = false, persist = false } = {}) => {
+  const tryUnlock = async (passphrase, { silent = false, persist = true } = {}) => {
     try {
       await unlock(passphrase);
       if (persist) {
-        sessionStorage.setItem(config.sessionKey, passphrase);
+        setCachedPassphrase(passphrase);
       } else {
-        sessionStorage.removeItem(config.sessionKey);
+        clearCachedPassphrase();
       }
       error.hidden = true;
       error.textContent = '';
+      finishLoading();
       return true;
     } catch {
       if (!silent) {
@@ -108,14 +152,14 @@
         error.textContent = 'Invalid passphrase.';
       }
 
-      sessionStorage.removeItem(config.sessionKey);
+      clearCachedPassphrase();
       return false;
     }
   };
 
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
-    await tryUnlock(input.value, { persist: remember ? remember.checked : false });
+    await tryUnlock(input.value, { persist: true });
   });
 
   if (toggle) {
@@ -129,24 +173,19 @@
     });
   }
 
-  const storedPassphrase = sessionStorage.getItem(config.sessionKey);
+  const storedPassphrase = getCachedPassphrase();
 
   if (storedPassphrase) {
     input.value = storedPassphrase;
-    if (remember) {
-      remember.checked = true;
-    }
-
     const unlocked = await tryUnlock(storedPassphrase, { silent: true, persist: true });
 
     if (!unlocked) {
       input.value = '';
-      if (remember) {
-        remember.checked = false;
-      }
       input.focus();
+      finishLoading();
     }
   } else {
+    finishLoading();
     input.focus();
   }
 })();

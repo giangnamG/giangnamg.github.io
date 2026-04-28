@@ -1,6 +1,11 @@
 {% assign session_key = site.site_protection.session_key | default: 'site_protection_passphrase' %}
 
-<section class="site-protection-shell">
+<section class="site-protection-shell is-loading" id="site-protection-shell">
+  <div class="site-protection-loading" id="site-protection-loading" aria-live="polite">
+    <span class="site-protection-loading-ring"></span>
+    <span>Unlocking protected content...</span>
+  </div>
+
   <div class="site-protection-card" id="site-protection-gate">
     <div class="site-protection-badge">
       <span class="site-protection-badge-dot"></span>
@@ -35,17 +40,12 @@
         </button>
       </div>
 
-      <label class="site-protection-remember">
-        <input id="site-protection-remember" type="checkbox">
-        <span>Remember for this browser tab</span>
-      </label>
-
       <button type="submit" class="btn btn-primary site-protection-submit">Unlock</button>
     </form>
 
     <p class="site-protection-footnote">
-      The passphrase is not embedded in the page source. If you enable “Remember”, it is stored only in
-      `sessionStorage` for this tab.
+      The passphrase is not embedded in the page source. After a successful unlock, this browser will remember it
+      for 1 hour to avoid showing the form again on reload.
     </p>
 
     <p id="site-protection-error" class="site-protection-error" hidden></p>
@@ -55,7 +55,7 @@
 </section>
 
 <script id="site-protection-config" type="application/json">
-  {"sessionKey":"{{ session_key }}"}
+  {"sessionKey":"{{ session_key }}","cacheTtlMs":3600000}
 </script>
 <script id="site-protection-payload" type="application/json">{{ include.content | encrypt_protected_html }}</script>
 <script defer src="{{ '/assets/js/site-protection.js' | relative_url }}"></script>
@@ -64,6 +64,39 @@
   .site-protection-shell {
     max-width: 44rem;
     margin: 5rem auto 3rem;
+  }
+
+  .site-protection-shell.is-loading #site-protection-gate,
+  .site-protection-shell.is-loading #site-protection-content {
+    visibility: hidden;
+    opacity: 0;
+  }
+
+  .site-protection-loading {
+    display: none;
+    align-items: center;
+    gap: 0.9rem;
+    margin: 0 auto 1rem;
+    width: fit-content;
+    padding: 0.75rem 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-muted-color);
+    font-size: 0.95rem;
+  }
+
+  .site-protection-shell.is-loading .site-protection-loading {
+    display: inline-flex;
+  }
+
+  .site-protection-loading-ring {
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid rgba(110, 168, 254, 0.25);
+    border-top-color: #6ea8fe;
+    border-radius: 999px;
+    animation: site-protection-spin 900ms linear infinite;
   }
 
   .site-protection-card {
@@ -169,20 +202,6 @@
     transform: translateY(1px);
   }
 
-  .site-protection-remember {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.65rem;
-    color: var(--text-muted-color);
-    font-size: 0.95rem;
-    user-select: none;
-  }
-
-  .site-protection-remember input {
-    width: 1rem;
-    height: 1rem;
-  }
-
   .site-protection-submit {
     min-height: 3rem;
     border: 0;
@@ -214,6 +233,12 @@
   body.site-protected #search,
   body.site-protected #search-cancel {
     display: none !important;
+  }
+
+  @keyframes site-protection-spin {
+    to {
+      transform: rotate(360deg);
+    }
   }
 
   @media (max-width: 640px) {
