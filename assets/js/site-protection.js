@@ -39,6 +39,9 @@
     recordsByUrl: new Map(),
     uiOpen: false
   };
+  const mediaState = {
+    lightbox: null
+  };
   const searchableBlockSelector = 'h1, h2, h3, h4, h5, h6, p, li, blockquote, pre code, td, th';
   const classNames = {
     hidden: 'd-none',
@@ -187,6 +190,29 @@
 
       image.addEventListener('load', clearPlaceholder, { once: true });
       image.addEventListener('error', clearPlaceholder, { once: true });
+    });
+  };
+
+  const initializeProtectedLightbox = (root) => {
+    if (typeof window.GLightbox !== 'function') {
+      return;
+    }
+
+    mediaState.lightbox?.destroy();
+
+    const popupImages = root.querySelectorAll('a.popup');
+    if (!popupImages.length) {
+      mediaState.lightbox = null;
+      return;
+    }
+
+    mediaState.lightbox = window.GLightbox({
+      selector: '#site-protection-content a.popup',
+      touchNavigation: true,
+      loop: false,
+      closeOnOutsideClick: true,
+      openEffect: 'zoom',
+      closeEffect: 'fade'
     });
   };
 
@@ -858,6 +884,7 @@
     content.innerHTML = html;
     runInlineScripts(content);
     finalizeProtectedContentImages(content);
+    initializeProtectedLightbox(content);
     gate.hidden = true;
     content.hidden = false;
     if (panelWrapper) {
