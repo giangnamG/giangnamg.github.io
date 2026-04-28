@@ -158,6 +158,38 @@
     });
   };
 
+  const clearProtectedImagePlaceholder = (image) => {
+    if (!(image instanceof HTMLImageElement)) {
+      return;
+    }
+
+    image.classList.remove('shimmer', 'blur');
+
+    const linkWrapper = image.closest('a.img-link');
+    if (linkWrapper) {
+      linkWrapper.classList.remove('shimmer', 'blur');
+    }
+
+    const figureWrapper = image.closest('figure');
+    if (figureWrapper) {
+      figureWrapper.classList.remove('shimmer', 'blur');
+    }
+  };
+
+  const finalizeProtectedContentImages = (root) => {
+    root.querySelectorAll('img').forEach((image) => {
+      const clearPlaceholder = () => clearProtectedImagePlaceholder(image);
+
+      if (image.complete && image.naturalWidth > 0) {
+        clearPlaceholder();
+        return;
+      }
+
+      image.addEventListener('load', clearPlaceholder, { once: true });
+      image.addEventListener('error', clearPlaceholder, { once: true });
+    });
+  };
+
   const deriveKey = async (passphrase, salt, iterations) => {
     const keyMaterial = await crypto.subtle.importKey(
       'raw',
@@ -825,6 +857,7 @@
     const html = await decryptSerializedPayload(payload, passphrase);
     content.innerHTML = html;
     runInlineScripts(content);
+    finalizeProtectedContentImages(content);
     gate.hidden = true;
     content.hidden = false;
     if (panelWrapper) {

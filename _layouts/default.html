@@ -80,6 +80,32 @@ layout: compress
               #access-bottom .post-tag {
                 margin: 0 !important;
               }
+
+              body.site-protected #site-protection-content a.popup.img-link.shimmer,
+              body.site-protected #site-protection-content a.popup.img-link.blur,
+              body.site-protected #site-protection-content figure.shimmer,
+              body.site-protected #site-protection-content figure.blur {
+                background: transparent !important;
+              }
+
+              body.site-protected #site-protection-content a.popup.img-link.shimmer::before,
+              body.site-protected #site-protection-content a.popup.img-link.shimmer::after,
+              body.site-protected #site-protection-content a.popup.img-link.blur::before,
+              body.site-protected #site-protection-content a.popup.img-link.blur::after,
+              body.site-protected #site-protection-content figure.shimmer::before,
+              body.site-protected #site-protection-content figure.shimmer::after,
+              body.site-protected #site-protection-content figure.blur::before,
+              body.site-protected #site-protection-content figure.blur::after {
+                animation: none !important;
+                background: transparent !important;
+                opacity: 0 !important;
+                content: none !important;
+              }
+
+              body.site-protected #site-protection-content img[data-lqip],
+              body.site-protected #site-protection-content img[data-lqip='true'] {
+                filter: none !important;
+              }
             </style>
 
             {% include_cached footer.html lang=lang %}
