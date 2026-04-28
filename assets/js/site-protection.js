@@ -486,42 +486,50 @@
     );
     const snippetParts = [];
     const seen = new Set();
-    const targetLength = 360;
+    const targetLength = 640;
+    const minimumLength = 420;
 
-    const pushPart = (value) => {
-      const cleaned = String(value || '').trim();
+    const insertPart = (value, position = 'end') => {
+      const cleaned = String(value || '')
+        .replace(/\s+/g, ' ')
+        .trim();
+
       if (!cleaned || seen.has(cleaned)) {
         return;
       }
 
       seen.add(cleaned);
+
+      if (position === 'start') {
+        snippetParts.unshift(cleaned);
+        return;
+      }
+
       snippetParts.push(cleaned);
     };
 
-    pushPart(record.content);
+    const currentLength = () => snippetParts.join(' ').length;
+
+    insertPart(record.content);
 
     if (currentIndex !== -1) {
-      for (let offset = 1; offset <= 3; offset += 1) {
+      for (let offset = 1; offset <= 8; offset += 1) {
         const next = neighbors[currentIndex + offset];
         if (next) {
-          pushPart(next.content);
+          insertPart(next.content, 'end');
         }
 
-        if (snippetParts.join(' ').length >= targetLength) {
+        if (currentLength() >= targetLength) {
           break;
         }
-      }
 
-      if (snippetParts.join(' ').length < 120) {
-        for (let offset = 1; offset <= 2; offset += 1) {
-          const previous = neighbors[currentIndex - offset];
-          if (previous) {
-            snippetParts.unshift(previous.content.trim());
-          }
+        const previous = neighbors[currentIndex - offset];
+        if (previous) {
+          insertPart(previous.content, 'start');
+        }
 
-          if (snippetParts.join(' ').length >= 180) {
-            break;
-          }
+        if (currentLength() >= targetLength) {
+          break;
         }
       }
     }
@@ -542,12 +550,22 @@
     }
 
     if (matchIndex === -1) {
-      return source.slice(0, 220).trim();
+      return source.slice(0, 520).trim();
     }
 
-    const contextRadius = 90;
-    const start = Math.max(0, matchIndex - contextRadius);
-    const end = Math.min(source.length, matchIndex + matchedLength + contextRadius);
+    const beforeContext = 200;
+    const afterContext = 280;
+    let start = Math.max(0, matchIndex - beforeContext);
+    let end = Math.min(source.length, matchIndex + matchedLength + afterContext);
+
+    if (end - start < minimumLength) {
+      const missing = minimumLength - (end - start);
+      const extendBefore = Math.floor(missing / 2);
+      const extendAfter = missing - extendBefore;
+      start = Math.max(0, start - extendBefore);
+      end = Math.min(source.length, end + extendAfter);
+    }
+
     let snippet = source.slice(start, end).trim();
 
     if (start > 0) {
