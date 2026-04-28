@@ -12,6 +12,13 @@
   const searchInput = document.getElementById('search-input');
   const searchResults = document.getElementById('search-results');
   const searchHints = document.getElementById('search-hints');
+  const searchTrigger = document.getElementById('search-trigger');
+  const searchCancel = document.getElementById('search-cancel');
+  const searchBox = document.getElementById('search');
+  const searchResultWrapper = document.getElementById('search-result-wrapper');
+  const sidebarTrigger = document.getElementById('sidebar-trigger');
+  const topbarTitle = document.getElementById('topbar-title');
+  const mainRows = document.querySelectorAll('#main-wrapper > .container > .row');
 
   if (!configNode || !payloadNode || !form || !input || !error || !gate || !content || !shell) {
     return;
@@ -27,7 +34,13 @@
     bound: false,
     initialized: false,
     loadingPromise: null,
-    records: []
+    records: [],
+    uiOpen: false
+  };
+  const classNames = {
+    hidden: 'd-none',
+    visible: 'd-block',
+    flex: 'd-flex'
   };
 
   const finishLoading = () => {
@@ -158,6 +171,78 @@
     searchResults.innerHTML = `<p class="mt-3 text-muted">${escapeHtml(message)}</p>`;
   };
 
+  const openProtectedSearchUi = () => {
+    if (searchState.uiOpen) {
+      return;
+    }
+
+    if (searchResultWrapper) {
+      searchResultWrapper.classList.remove(classNames.hidden);
+    }
+
+    mainRows.forEach((row) => {
+      if (searchResultWrapper && row.contains(searchResultWrapper)) {
+        return;
+      }
+
+      row.classList.add(classNames.hidden);
+    });
+
+    if (sidebarTrigger) {
+      sidebarTrigger.classList.add(classNames.hidden);
+    }
+
+    if (topbarTitle) {
+      topbarTitle.classList.add(classNames.hidden);
+    }
+
+    if (searchTrigger) {
+      searchTrigger.classList.add(classNames.hidden);
+    }
+
+    if (searchBox) {
+      searchBox.classList.add(classNames.flex);
+    }
+
+    if (searchCancel) {
+      searchCancel.classList.add(classNames.visible);
+    }
+
+    searchState.uiOpen = true;
+  };
+
+  const closeProtectedSearchUi = () => {
+    if (searchResultWrapper) {
+      searchResultWrapper.classList.add(classNames.hidden);
+    }
+
+    mainRows.forEach((row) => {
+      row.classList.remove(classNames.hidden);
+    });
+
+    if (sidebarTrigger) {
+      sidebarTrigger.classList.remove(classNames.hidden);
+    }
+
+    if (topbarTitle) {
+      topbarTitle.classList.remove(classNames.hidden);
+    }
+
+    if (searchTrigger) {
+      searchTrigger.classList.remove(classNames.hidden);
+    }
+
+    if (searchBox) {
+      searchBox.classList.remove(classNames.flex);
+    }
+
+    if (searchCancel) {
+      searchCancel.classList.remove(classNames.visible);
+    }
+
+    searchState.uiOpen = false;
+  };
+
   const highlightMatches = (value, terms) => {
     if (!terms.length) {
       return escapeHtml(value);
@@ -285,6 +370,7 @@
     const terms = Array.from(new Set(normalizedQuery.split(/\s+/).filter(Boolean)));
 
     if (!normalizedQuery) {
+      closeProtectedSearchUi();
       searchResults.innerHTML = '';
       if (searchHints) {
         searchHints.classList.remove('d-none');
@@ -295,6 +381,8 @@
     if (searchHints) {
       searchHints.classList.add('d-none');
     }
+
+    openProtectedSearchUi();
 
     if (!searchState.initialized) {
       setSearchMessage('Loading encrypted search index...');
@@ -336,6 +424,32 @@
     if (searchState.bound || !searchInput || !searchResults) {
       return;
     }
+
+    if (searchTrigger) {
+      searchTrigger.addEventListener('click', () => {
+        openProtectedSearchUi();
+        searchInput.focus();
+      });
+    }
+
+    if (searchCancel) {
+      searchCancel.addEventListener('click', () => {
+        searchInput.value = '';
+        if (searchResults) {
+          searchResults.innerHTML = '';
+        }
+        if (searchHints) {
+          searchHints.classList.remove(classNames.hidden);
+        }
+        closeProtectedSearchUi();
+      });
+    }
+
+    searchInput.addEventListener('focus', () => {
+      if (searchInput.value.trim() !== '') {
+        openProtectedSearchUi();
+      }
+    });
 
     searchInput.addEventListener('input', () => {
       renderSearchResults(searchInput.value);
