@@ -52,11 +52,6 @@ layout: compress
               {% assign _include_path = _include | append: '.html' %}
               {% include {{ _include_path }} lang=lang %}
             {% endfor %}
-
-            <div class="access">
-              {% include_cached update-list.html lang=lang %}
-              {% include_cached trending-tags.html lang=lang %}
-            </div>
           </aside>
         </div>
 
@@ -69,6 +64,11 @@ layout: compress
                 {% include {{ _include_path }} lang=lang %}
               {% endfor %}
             {% endunless %}
+
+            <div id="access-bottom" class="access access-bottom text-muted mt-5 pt-3 border-top">
+              {% include_cached update-list.html lang=lang %}
+              {% include_cached trending-tags.html lang=lang %}
+            </div>
 
             {% include_cached footer.html lang=lang %}
           </div>
