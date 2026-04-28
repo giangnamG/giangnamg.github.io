@@ -133,9 +133,6 @@ module SiteProtection
   end
 
   def search_blocks_for(document)
-    cached = document.data["protected_search_blocks"]
-    return cached if cached.is_a?(Array) && !cached.empty?
-
     html = document.content.to_s
     return [] if html.empty?
 
@@ -148,13 +145,6 @@ module SiteProtection
     end
 
     blocks.reject(&:empty?).uniq
-  end
-
-  def cache_rendered_search_blocks(document)
-    html = document.output.to_s
-    return if html.empty?
-
-    document.data["protected_search_blocks"] = search_blocks_from_html(html)
   end
 
   def normalized_block_hash(text)
@@ -278,18 +268,6 @@ module SiteProtectionFilter
 end
 
 Liquid::Template.register_filter(SiteProtectionFilter)
-
-Jekyll::Hooks.register :documents, :post_render do |document|
-  next unless SiteProtection.enabled?(document.site)
-
-  SiteProtection.cache_rendered_search_blocks(document)
-end
-
-Jekyll::Hooks.register :pages, :post_render do |page|
-  next unless SiteProtection.enabled?(page.site)
-
-  SiteProtection.cache_rendered_search_blocks(page)
-end
 
 Jekyll::Hooks.register :site, :post_write do |site|
   next unless SiteProtection.enabled?(site)
