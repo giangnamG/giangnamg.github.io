@@ -3,11 +3,21 @@
     <div class="content">
       <style>
         #search-results {
+          display: grid !important;
+          grid-template-columns: minmax(0, 1fr);
           align-items: stretch;
+          row-gap: 1.5rem;
           width: 100%;
+          margin-top: 1rem;
+          padding: 0;
         }
 
         #search-results .site-search-result {
+          display: block;
+          grid-column: 1;
+          justify-self: stretch;
+          align-self: stretch;
+          flex: none;
           width: 100%;
           max-width: 100%;
           box-sizing: border-box;
@@ -128,7 +138,7 @@
         {% endif %}
       </div>
 
-      <div id="search-results" class="d-flex flex-column gap-4 mt-4"></div>
+      <div id="search-results"></div>
     </div>
   </div>
 </div>
