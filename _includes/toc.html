@@ -8,7 +8,7 @@
   </section>
 
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
+    const initializeChirpyToc = () => {
       const content = document.querySelector('main article .content');
       const toc = document.getElementById('toc');
       const popupToc = document.getElementById('toc-popup-content');
@@ -44,6 +44,11 @@
       });
 
       if (!headings.length) {
+        toc.replaceChildren();
+        if (popupToc) {
+          popupToc.replaceChildren();
+        }
+        tocWrapper.classList.add('invisible');
         return;
       }
 
@@ -98,6 +103,9 @@
       }
 
       tocWrapper.classList.remove('invisible');
-    });
+    };
+
+    document.addEventListener('DOMContentLoaded', initializeChirpyToc);
+    document.addEventListener('site-protection:unlocked', initializeChirpyToc);
   </script>
 {% endif %}

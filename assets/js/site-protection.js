@@ -18,6 +18,7 @@
   const searchResultWrapper = document.getElementById('search-result-wrapper');
   const sidebarTrigger = document.getElementById('sidebar-trigger');
   const topbarTitle = document.getElementById('topbar-title');
+  const panelWrapper = document.getElementById('panel-wrapper');
   const mainRows = document.querySelectorAll('#main-wrapper > .container > .row');
 
   if (!configNode || !payloadNode || !form || !input || !error || !gate || !content || !shell) {
@@ -826,6 +827,9 @@
     runInlineScripts(content);
     gate.hidden = true;
     content.hidden = false;
+    if (panelWrapper) {
+      panelWrapper.classList.remove(classNames.hidden);
+    }
     document.body.classList.add('site-unlocked');
     await initializeProtectedSearch(passphrase);
     revealSearchTargetFromLocation();
