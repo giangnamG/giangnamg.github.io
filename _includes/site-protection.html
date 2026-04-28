@@ -1,0 +1,77 @@
+{% assign session_key = site.site_protection.session_key | default: 'site_protection_passphrase' %}
+
+<section class="site-protection-shell">
+  <div class="site-protection-card" id="site-protection-gate">
+    <h1 class="site-protection-title">Protected Site</h1>
+    <p class="site-protection-text">
+      This page is encrypted in the browser. Enter the passphrase to unlock it.
+    </p>
+
+    <form id="site-protection-form" class="site-protection-form">
+      <label class="site-protection-label" for="site-protection-passphrase">Passphrase</label>
+      <input
+        id="site-protection-passphrase"
+        class="form-control"
+        type="password"
+        autocomplete="current-password"
+        spellcheck="false"
+        required
+      >
+      <button type="submit" class="btn btn-primary">Unlock</button>
+    </form>
+
+    <p id="site-protection-error" class="site-protection-error" hidden></p>
+  </div>
+
+  <div id="site-protection-content" hidden></div>
+</section>
+
+<script id="site-protection-config" type="application/json">
+  {"sessionKey":"{{ session_key }}"}
+</script>
+<script id="site-protection-payload" type="application/json">{{ include.content | encrypt_protected_html }}</script>
+<script defer src="{{ '/assets/js/site-protection.js' | relative_url }}"></script>
+
+<style>
+  .site-protection-shell {
+    max-width: 48rem;
+    margin: 4rem auto;
+  }
+
+  .site-protection-card {
+    padding: 2rem;
+    border: 1px solid var(--main-border-color, rgba(255, 255, 255, 0.12));
+    border-radius: 1rem;
+    background: var(--card-bg, var(--main-bg));
+    box-shadow: var(--card-shadow, none);
+  }
+
+  .site-protection-title {
+    margin-bottom: 0.75rem;
+  }
+
+  .site-protection-text {
+    color: var(--text-muted-color);
+    margin-bottom: 1.25rem;
+  }
+
+  .site-protection-form {
+    display: grid;
+    gap: 0.9rem;
+  }
+
+  .site-protection-label {
+    font-weight: 600;
+  }
+
+  .site-protection-error {
+    margin-top: 1rem;
+    color: #dc3545;
+  }
+
+  body.site-protected #search-trigger,
+  body.site-protected #search,
+  body.site-protected #search-cancel {
+    display: none !important;
+  }
+</style>

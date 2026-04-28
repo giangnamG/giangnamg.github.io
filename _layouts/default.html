@@ -12,11 +12,13 @@ layout: compress
   {% capture prefer_mode %}data-mode="{{ site.theme_mode }}"{% endcapture %}
 {% endif %}
 
+{% assign site_protection_enabled = site.site_protection.enabled | default: false %}
+
 <!-- `site.alt_lang` can specify a language different from the UI -->
 <html lang="{{ page.lang | default: site.alt_lang | default: site.lang }}" {{ prefer_mode }}>
   {% include head.html lang=lang %}
 
-  <body>
+  <body{% if site_protection_enabled %} class="site-protected"{% endif %}>
     {% include sidebar.html lang=lang %}
 
     <div id="main-wrapper" class="d-flex justify-content-center">
@@ -25,40 +27,54 @@ layout: compress
 
         <div class="row flex-grow-1">
           <main aria-label="Main Content" class="col-12 col-lg-11 col-xl-9 px-md-4">
-            {% if layout.layout == 'default' %}
-              {% include refactor-content.html content=content lang=lang %}
+            {% capture rendered_main %}
+              {% if layout.layout == 'default' %}
+                {% include refactor-content.html content=content lang=lang %}
+              {% else %}
+                {{ content }}
+              {% endif %}
+            {% endcapture %}
+
+            {% if site_protection_enabled %}
+              {% include site-protection.html content=rendered_main %}
             {% else %}
-              {{ content }}
+              {{ rendered_main }}
             {% endif %}
           </main>
 
           <!-- panel -->
-          <aside aria-label="Panel" id="panel-wrapper" class="col-xl-3 ps-2 text-muted">
-            {% for _include in layout.panel_includes %}
-              {% assign _include_path = _include | append: '.html' %}
-              {% include {{ _include_path }} lang=lang %}
-            {% endfor %}
+          {% unless site_protection_enabled %}
+            <aside aria-label="Panel" id="panel-wrapper" class="col-xl-3 ps-2 text-muted">
+              {% for _include in layout.panel_includes %}
+                {% assign _include_path = _include | append: '.html' %}
+                {% include {{ _include_path }} lang=lang %}
+              {% endfor %}
 
-            <div class="access">
-              {% include_cached update-list.html lang=lang %}
-              {% include_cached trending-tags.html lang=lang %}
-            </div>
-          </aside>
+              <div class="access">
+                {% include_cached update-list.html lang=lang %}
+                {% include_cached trending-tags.html lang=lang %}
+              </div>
+            </aside>
+          {% endunless %}
         </div>
 
         <div class="row">
           <!-- tail -->
           <div id="tail-wrapper" class="col-12 col-lg-11 col-xl-9 px-md-4">
-            {% for _include in layout.tail_includes %}
-              {% assign _include_path = _include | append: '.html' %}
-              {% include {{ _include_path }} lang=lang %}
-            {% endfor %}
+            {% unless site_protection_enabled %}
+              {% for _include in layout.tail_includes %}
+                {% assign _include_path = _include | append: '.html' %}
+                {% include {{ _include_path }} lang=lang %}
+              {% endfor %}
+            {% endunless %}
 
             {% include_cached footer.html lang=lang %}
           </div>
         </div>
 
-        {% include_cached search-results.html lang=lang %}
+        {% unless site_protection_enabled %}
+          {% include_cached search-results.html lang=lang %}
+        {% endunless %}
       </div>
 
       <aside aria-label="Scroll to Top">

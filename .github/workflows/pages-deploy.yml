@@ -49,6 +49,7 @@ jobs:
         run: bundle exec jekyll b -d "_site${{ steps.pages.outputs.base_path }}"
         env:
           JEKYLL_ENV: "production"
+          SITE_PASSPHRASE: ${{ secrets.SITE_PASSPHRASE }}
 
       - name: Test site
         run: |
