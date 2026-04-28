@@ -35,6 +35,7 @@
     initialized: false,
     loadingPromise: null,
     records: [],
+    recordsByUrl: new Map(),
     uiOpen: false
   };
   const searchableBlockSelector = 'h1, h2, h3, h4, h5, h6, p, li, blockquote, pre code, td, th';
@@ -479,8 +480,54 @@
   };
 
   const buildSnippet = (record, phrase, terms) => {
-    const source = record.content || '';
-    const haystack = record.contentNorm || '';
+    const neighbors = searchState.recordsByUrl.get(record.url) || [];
+    const currentIndex = neighbors.findIndex(
+      (candidate) => candidate.blockIndex === record.blockIndex && candidate.content === record.content
+    );
+    const snippetParts = [];
+    const seen = new Set();
+    const targetLength = 360;
+
+    const pushPart = (value) => {
+      const cleaned = String(value || '').trim();
+      if (!cleaned || seen.has(cleaned)) {
+        return;
+      }
+
+      seen.add(cleaned);
+      snippetParts.push(cleaned);
+    };
+
+    pushPart(record.content);
+
+    if (currentIndex !== -1) {
+      for (let offset = 1; offset <= 3; offset += 1) {
+        const next = neighbors[currentIndex + offset];
+        if (next) {
+          pushPart(next.content);
+        }
+
+        if (snippetParts.join(' ').length >= targetLength) {
+          break;
+        }
+      }
+
+      if (snippetParts.join(' ').length < 120) {
+        for (let offset = 1; offset <= 2; offset += 1) {
+          const previous = neighbors[currentIndex - offset];
+          if (previous) {
+            snippetParts.unshift(previous.content.trim());
+          }
+
+          if (snippetParts.join(' ').length >= 180) {
+            break;
+          }
+        }
+      }
+    }
+
+    const source = snippetParts.join(' ').replace(/\s+/g, ' ').trim() || record.content || '';
+    const haystack = normalizeText(source);
     const matchNeedles = [phrase, ...terms].filter(Boolean);
     let matchIndex = -1;
     let matchedLength = 0;
@@ -732,6 +779,16 @@
           tagsNorm: normalizeText(record.tags),
           contentNorm: normalizeText(record.content)
         }));
+        searchState.recordsByUrl = searchState.records.reduce((map, record) => {
+          const collection = map.get(record.url) || [];
+          collection.push(record);
+          map.set(record.url, collection);
+          return map;
+        }, new Map());
+        searchState.recordsByUrl.forEach((collection, url) => {
+          collection.sort((left, right) => left.blockIndex - right.blockIndex);
+          searchState.recordsByUrl.set(url, collection);
+        });
         searchState.initialized = true;
       })();
     }
