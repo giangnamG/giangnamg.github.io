@@ -64,25 +64,23 @@
       {% endif %}
     </div>
 
-    {% unless site.site_protection.enabled %}
-      <button type="button" id="search-trigger" class="btn btn-link" aria-label="Search">
-        <i class="fas fa-search fa-fw"></i>
-      </button>
+    <button type="button" id="search-trigger" class="btn btn-link" aria-label="Search">
+      <i class="fas fa-search fa-fw"></i>
+    </button>
 
-      <search id="search" class="align-items-center ms-3 ms-lg-0">
-        <i class="fas fa-search fa-fw"></i>
-        <input
-          class="form-control"
-          id="search-input"
-          type="search"
-          aria-label="search"
-          autocomplete="off"
-          placeholder="{{ site.data.locales[include.lang].search.hint | capitalize }}..."
-        >
-      </search>
-      <button type="button" class="btn btn-link text-decoration-none" id="search-cancel">
-        {{- site.data.locales[include.lang].search.cancel -}}
-      </button>
-    {% endunless %}
+    <search id="search" class="align-items-center ms-3 ms-lg-0">
+      <i class="fas fa-search fa-fw"></i>
+      <input
+        class="form-control"
+        id="search-input"
+        type="search"
+        aria-label="search"
+        autocomplete="off"
+        placeholder="{{ site.data.locales[include.lang].search.hint | capitalize }}..."
+      >
+    </search>
+    <button type="button" class="btn btn-link text-decoration-none" id="search-cancel">
+      {{- site.data.locales[include.lang].search.cancel -}}
+    </button>
   </div>
 </header>

@@ -72,9 +72,7 @@ layout: compress
           </div>
         </div>
 
-        {% unless site_protection_enabled %}
-          {% include_cached search-results.html lang=lang %}
-        {% endunless %}
+        {% include_cached search-results.html lang=lang %}
       </div>
 
       <aside aria-label="Scroll to Top">

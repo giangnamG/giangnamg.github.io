@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require "base64"
+require "cgi"
+require "fileutils"
 require "json"
 require "openssl"
 
@@ -9,6 +11,7 @@ module SiteProtection
   KEY_LENGTH = 32
   SALT_LENGTH = 16
   IV_LENGTH = 12
+  PROTECTED_SEARCH_INDEX_PATH = File.join("assets", "js", "data", "search-protected.json")
 
   module_function
 
@@ -55,6 +58,91 @@ module SiteProtection
       "ct" => Base64.strict_encode64(ciphertext),
       "tag" => Base64.strict_encode64(tag)
     }.to_json
+  end
+
+  def searchable_documents(site)
+    documents =
+      site.posts.docs +
+      site.pages +
+      site.collections.values.flat_map(&:docs)
+
+    documents
+      .uniq { |document| document.url }
+      .select { |document| searchable_document?(document) }
+  end
+
+  def searchable_document?(document)
+    return false if document.data["search"] == false
+
+    url = document.url.to_s
+    return false if url.empty?
+    return false if url == "/404.html"
+    return false if url.match?(%r{^/page\d+/?$})
+
+    layout = document.data["layout"].to_s
+    return false if %w[home category tag categories tags archives].include?(layout)
+    return false if %w[/categories/ /tags/ /archives/].include?(url)
+
+    true
+  end
+
+  def build_protected_search_index(site)
+    records = searchable_documents(site).map do |document|
+      title = search_title_for(document)
+      content = search_content_for(document)
+
+      next if title.empty? || content.empty?
+
+      {
+        "title" => title,
+        "url" => document.url,
+        "content" => content,
+        "categories" => Array(document.data["categories"]).join(", "),
+        "tags" => Array(document.data["tags"]).join(", ")
+      }
+    end.compact
+
+    records.sort_by! { |record| record["title"].downcase }
+    records.to_json
+  end
+
+  def search_title_for(document)
+    title = document.data["title"].to_s.strip
+    return title unless title.empty?
+
+    fallback = File.basename(document.path.to_s, File.extname(document.path.to_s))
+    fallback.tr("-_", " ").strip
+  end
+
+  def search_content_for(document)
+    source = document.content.to_s
+    return "" if source.empty?
+
+    text = source.dup
+    text.gsub!(/\r\n?/, "\n")
+    text.gsub!(%r!\{\%.*?\%\}!m, " ")
+    text.gsub!(%r!\{\{.*?\}\}!m, " ")
+    text.gsub!(%r!```+([^\n]*)\n(.*?)```+!m, " \\2 ")
+    text.gsub!(%r!`([^`]+)`!, " \\1 ")
+    text.gsub!(%r!\!\[([^\]]*)\]\([^)]+\)!, " \\1 ")
+    text.gsub!(%r!\[([^\]]+)\]\([^)]+\)!, " \\1 ")
+    text.gsub!(%r!<style.*?>.*?</style>!mi, " ")
+    text.gsub!(%r!<script.*?>.*?</script>!mi, " ")
+    text.gsub!(%r!<[^>]+>!, " ")
+    text.gsub!(/^\s{0,3}\#{1,6}\s+/, "")
+    text.gsub!(/^\s*[-*+]\s+/, "")
+    text.gsub!(/^\s*\d+\.\s+/, "")
+    text = CGI.unescapeHTML(text)
+    text.gsub!(/[ \t\f\v]+/, " ")
+    text.gsub!(/\n{2,}/, "\n")
+    text.gsub!(/\s+/, " ")
+    text.strip
+  end
+
+  def write_protected_search_index(site)
+    destination = File.join(site.dest, PROTECTED_SEARCH_INDEX_PATH)
+    FileUtils.mkdir_p(File.dirname(destination))
+    File.write(destination, encrypt_html(build_protected_search_index(site)))
   end
 
   def scrub_generated_files(site)
@@ -120,5 +208,6 @@ Jekyll::Hooks.register :site, :post_write do |site|
   next unless SiteProtection.enabled?(site)
 
   SiteProtection.passphrase!
+  SiteProtection.write_protected_search_index(site)
   SiteProtection.scrub_generated_files(site)
 end

@@ -55,7 +55,11 @@
 </section>
 
 <script id="site-protection-config" type="application/json">
-  {"sessionKey":"{{ session_key }}","cacheTtlMs":3600000}
+  {
+    "sessionKey":"{{ session_key }}",
+    "cacheTtlMs":3600000,
+    "searchIndexPath":"{{ '/assets/js/data/search-protected.json' | relative_url }}"
+  }
 </script>
 <script id="site-protection-payload" type="application/json">{{ include.content | encrypt_protected_html }}</script>
 <script defer src="{{ '/assets/js/site-protection.js' | relative_url }}"></script>
@@ -229,9 +233,9 @@
     font-weight: 600;
   }
 
-  body.site-protected #search-trigger,
-  body.site-protected #search,
-  body.site-protected #search-cancel {
+  body.site-protected:not(.site-unlocked) #search-trigger,
+  body.site-protected:not(.site-unlocked) #search,
+  body.site-protected:not(.site-unlocked) #search-cancel {
     display: none !important;
   }
 

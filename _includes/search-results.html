@@ -1,0 +1,15 @@
+<div id="search-result-wrapper" class="d-none justify-content-center">
+  <div class="col-12 col-lg-11 col-xl-9 px-md-4">
+    <div class="content">
+      <div id="search-hints" class="text-muted mt-3">
+        {% if site.site_protection.enabled %}
+          <p class="mb-0">Search is available after the site is unlocked. Results match full text across posts and pages.</p>
+        {% else %}
+          <p class="mb-0">Type in the search box to find matching content.</p>
+        {% endif %}
+      </div>
+
+      <div id="search-results" class="d-flex flex-column gap-4 mt-4"></div>
+    </div>
+  </div>
+</div>
