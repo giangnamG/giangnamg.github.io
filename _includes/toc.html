@@ -141,6 +141,27 @@
         linksByHeadingId.get(headingId).push(link);
       });
 
+      const keepActiveLinkVisible = () => {
+        const activeLink = toc.querySelector('.is-active-link');
+        if (!activeLink) {
+          return;
+        }
+
+        const wrapperRect = tocWrapper.getBoundingClientRect();
+        const linkRect = activeLink.getBoundingClientRect();
+        const topPadding = 48;
+        const bottomPadding = 24;
+        const isAboveView = linkRect.top < wrapperRect.top + topPadding;
+        const isBelowView = linkRect.bottom > wrapperRect.bottom - bottomPadding;
+
+        if (isAboveView || isBelowView) {
+          activeLink.scrollIntoView({
+            block: 'nearest',
+            inline: 'nearest'
+          });
+        }
+      };
+
       const setActiveHeading = (activeHeadingId) => {
         tocWrapper.querySelectorAll('.is-active-li').forEach((item) => item.classList.remove('is-active-li'));
         tocWrapper.querySelectorAll('.is-active-link').forEach((link) => link.classList.remove('is-active-link'));
@@ -153,6 +174,8 @@
           link.classList.add('is-active-link');
           link.closest('li')?.classList.add('is-active-li');
         });
+
+        keepActiveLinkVisible();
       };
 
       const resolveActiveHeading = () => {
