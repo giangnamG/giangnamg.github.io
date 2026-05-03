@@ -301,6 +301,311 @@ Xảy ra khi sử dụng các toán tử truy vấn để chỉ định các đi
     - Body parameters to JSON
     - Body parameters to XML
 
+## 5. Case Study
+
+### Lab 01: Detecting NoSQL injection
+
+#### Mô tả
+Bộ lọc danh mục sản phẩm trong bài lab này hoạt động trên nền tảng cơ sở dữ liệu NoSQL MongoDB. Nó tồn tại lỗ hổng NoSQL injection.
+Để hoàn thành bài lab, hãy thực hiện một cuộc tấn công NoSQL injection khiến ứng dụng hiển thị các sản phẩm chưa được phát hành
+
+#### Solve
+1. Trong trình duyệt của Burp, truy cập bài lab và nhấp vào một bộ lọc danh mục sản phẩm.
+2. Trong Burp, đi tới **Proxy &gt; HTTP history**. Nhấp chuột phải vào yêu cầu lọc danh mục (category filter request) và chọn **Send to Repeater**.
+    
+    ![image.png](/assets/img/portswigger/lab-01-detecting-nosql-injection/image.png)
+    
+3. Trong **Repeater**, gửi một ký tự `'`vào tham số category. Chú ý rằng việc này gây ra lỗi cú pháp JavaScript. Điều này có thể cho thấy đầu vào của người dùng không được lọc hoặc làm sạch (sanitized) đúng cách.
+    
+    ![image.png](/assets/img/portswigger/lab-01-detecting-nosql-injection/image%201.png)
+    
+4. Gửi một payload JavaScript hợp lệ vào giá trị của tham số truy vấn category. Bạn có thể sử dụng payload sau:
+    
+    ```jsx
+    Gifts'+'
+    ```
+    
+    ![image.png](/assets/img/portswigger/lab-01-detecting-nosql-injection/image%202.png)
+    
+    Đảm bảo mã hóa URL (URL-encode) payload bằng cách bôi đen nó và sử dụng phím tắt Ctrl-U. Chú ý rằng nó không gây ra lỗi cú pháp. Điều này chỉ ra rằng một dạng injection phía máy chủ có thể đang diễn ra.
+    
+5. Xác định xem bạn có thể tiêm (inject) các điều kiện boolean để thay đổi phản hồi hay không:
+    - Chèn một điều kiện **sai** (false) vào tham số category. Ví dụ:
+        
+        ```jsx
+        Gifts' && 0 && 'x
+        ```
+        
+        Đảm bảo URL-encode payload. 
+        
+        Kết quả: không có sản phẩm nào được truy xuất.
+        
+        ![image.png](/assets/img/portswigger/lab-01-detecting-nosql-injection/image%203.png)
+        
+    - Chèn một điều kiện **đúng** (true) vào tham số category. Ví dụ:
+        
+        ```jsx
+        Gifts' && 1 && 'x
+        ```
+        
+        Đảm bảo URL-encode payload.
+        
+        Kết quả: các sản phẩm trong danh mục Gifts được truy xuất.
+        
+        ![image.png](/assets/img/portswigger/lab-01-detecting-nosql-injection/image%204.png)
+        
+6. Gửi một điều kiện boolean luôn trả về giá trị đúng (true) trong tham số category. Ví dụ:
+    
+    ```jsx
+    Gifts'||1||'
+    ```
+    
+    ![image.png](/assets/img/portswigger/lab-01-detecting-nosql-injection/image%205.png)
+    
+7. Nhấp chuột phải vào phản hồi (response) và chọn **Show response in browser** (Hiển thị phản hồi trong trình duyệt).
+8. Sao chép URL và tải nó trong trình duyệt của Burp. Xác minh rằng phản hồi hiện đã chứa các sản phẩm chưa phát hành. Bài lab đã được giải quyết.
+
+### Lab 02: Exploiting NoSQL operator injection to bypass authentication
+
+#### Mô tả
+Chức năng đăng nhập của bài lab này hoạt động trên nền tảng cơ sở dữ liệu NoSQL MongoDB. Nó tồn tại lỗ hổng NoSQL injection thông qua việc sử dụng các toán tử (operators) của MongoDB.
+Để hoàn thành bài lab, hãy đăng nhập vào ứng dụng với tư cách là người dùng quản trị (administrator).
+Bạn có thể đăng nhập vào tài khoản của riêng mình bằng thông tin đăng nhập sau: wiener:peter.
+
+#### Solve
+1. Trong trình duyệt của Burp, đăng nhập vào ứng dụng bằng thông tin wiener:peter.
+2. Trong Burp, đi tới **Proxy &gt; HTTP history**. Nhấp chuột phải vào yêu cầu POST /login và chọn **Send to Repeater**.
+3. Trong **Repeater**, kiểm tra các tham số username và password để xác định xem chúng có cho phép bạn tiêm (inject) các toán tử MongoDB hay không:
+    - Thay đổi giá trị của tham số username từ "wiener" thành
+        
+        ```jsx
+        {"$ne":""}
+        ```
+        
+        (nghĩa là "không bằng rỗng"), sau đó gửi yêu cầu. Chú ý rằng thao tác này cho phép bạn đăng nhập.
+        
+        ![image.png](/assets/img/portswigger/lab-02-exploiting-nosql-operator-injection-to-bypass-authentication/image.png)
+        
+    - Thay đổi giá trị của tham số username từ `{"$ne":""}` thành `{"$regex":"wien.*"}`, sau đó gửi yêu cầu. Chú ý rằng bạn cũng có thể đăng nhập khi sử dụng toán tử $regex.
+        
+        ![image.png](/assets/img/portswigger/lab-02-exploiting-nosql-operator-injection-to-bypass-authentication/image%201.png)
+        
+    - Khi tham số `username`được đặt là `{"$ne":""}`, hãy thay đổi giá trị của tham số `password` từ "peter" thành `{"$ne":""}`, sau đó gửi lại yêu cầu. Chú ý rằng điều này khiến truy vấn trả về một số lượng bản ghi không mong muốn (thường là lỗi hoặc chuyển hướng lạ). Điều này chỉ ra rằng có nhiều hơn một người dùng đã được chọn (vì điều kiện đúng với tất cả mọi người).
+        
+        ![image.png](/assets/img/portswigger/lab-02-exploiting-nosql-operator-injection-to-bypass-authentication/image%202.png)
+        
+    - Khi tham số `password` được giữ nguyên là `{"$ne":""}`, hãy thay đổi giá trị của tham số `username` thành `{"$regex":"admin.*"}`, sau đó gửi lại yêu cầu. Chú ý rằng điều này giúp bạn đăng nhập thành công với tư cách là người dùng admin.
+        
+        ![image.png](/assets/img/portswigger/lab-02-exploiting-nosql-operator-injection-to-bypass-authentication/image%203.png)
+        
+4. Đăng nhập bằng admin và xóa Carlos
+
+### Lab 03: Exploiting NoSQL injection to extract data
+
+#### Mô tả
+Chức năng tra cứu người dùng (user lookup) của bài lab này hoạt động trên nền tảng cơ sở dữ liệu NoSQL MongoDB. Nó tồn tại lỗ hổng NoSQL injection.
+
+Để hoàn thành bài lab, hãy trích xuất mật khẩu của người dùng quản trị (administrator), sau đó đăng nhập vào tài khoản của họ.
+
+Bạn có thể đăng nhập vào tài khoản của chính mình bằng thông tin sau: wiener:peter.
+
+**Mẹo**
+
+Mật khẩu chỉ sử dụng các chữ cái thường.
+
+#### Solve
+1. Trong trình duyệt của Burp, truy cập bài lab và đăng nhập vào ứng dụng bằng thông tin wiener:peter.
+2. Trong Burp, đi tới **Proxy &gt; HTTP history**. Nhấp chuột phải vào yêu cầu GET /user/lookup?user=wiener và chọn **Send to Repeater**.
+    
+    ![image.png](/assets/img/portswigger/lab-03-exploiting-nosql-injection-to-extract-data/image.png)
+    
+3. Trong **Repeater**, gửi ký tự ' vào tham số user. Chú ý rằng việc này gây ra lỗi. Điều này có thể cho thấy đầu vào của người dùng không được lọc hoặc làm sạch (sanitized) đúng cách.
+    
+    ![image.png](/assets/img/portswigger/lab-03-exploiting-nosql-injection-to-extract-data/image%201.png)
+    
+4. Gửi một payload JavaScript hợp lệ vào tham số user. Ví dụ, bạn có thể sử dụng:
+    
+    ```jsx
+    wiener'+'
+    ```
+    
+    ![image.png](/assets/img/portswigger/lab-03-exploiting-nosql-injection-to-extract-data/image%202.png)
+    
+    Đảm bảo mã hóa URL (URL-encode) payload bằng cách bôi đen nó và sử dụng phím tắt Ctrl-U. Chú ý rằng nó truy xuất chi tiết tài khoản cho người dùng wiener, điều này chỉ ra rằng một dạng tiêm mã phía máy chủ (server-side injection) có thể đang diễn ra.
+    
+5. Xác định xem bạn có thể tiêm các điều kiện boolean để thay đổi phản hồi hay không:
+    - Gửi một điều kiện **sai** (false) trong tham số user. Ví dụ:
+        
+        ```jsx
+        wiener' && '1'=='2
+        ```
+        
+        Đảm bảo URL-encode payload. Kết quả: trả về thông báo Could not find user (Không tìm thấy người dùng).
+        
+        ![image.png](/assets/img/portswigger/lab-03-exploiting-nosql-injection-to-extract-data/image%203.png)
+        
+    - Gửi một điều kiện **đúng** (true) trong tham số user. Ví dụ:
+        
+        ```jsx
+        wiener' && '1'=='1
+        ```
+        
+        Đảm bảo URL-encode payload. Chú ý rằng nó không còn gây ra lỗi nữa. Thay vào đó, nó truy xuất chi tiết tài khoản cho người dùng wiener. Điều này chứng minh rằng bạn có thể kích hoạt các phản hồi khác nhau cho các điều kiện đúng và sai.
+        
+        ![image.png](/assets/img/portswigger/lab-03-exploiting-nosql-injection-to-extract-data/image%204.png)
+        
+6. Xác định độ dài mật khẩu:
+    - Thay đổi tham số user thành:
+        
+        ```jsx
+        administrator' && this.password.length < 30 || 'a'=='b
+        ```
+        
+        Sau đó gửi yêu cầu.
+        
+        ![image.png](/assets/img/portswigger/lab-03-exploiting-nosql-injection-to-extract-data/image%205.png)
+        
+        Đảm bảo URL-encode payload. Chú ý rằng phản hồi truy xuất chi tiết tài khoản cho người dùng administrator. Điều này chỉ ra rằng điều kiện là đúng (true) vì mật khẩu ngắn hơn 30 ký tự.
+        
+    - Giảm độ dài mật khẩu trong payload, sau đó gửi lại yêu cầu.
+    - Tiếp tục thử các độ dài khác nhau.
+    - Chú ý rằng khi bạn gửi giá trị 9, bạn lấy được chi tiết tài khoản của administrator, nhưng khi gửi giá trị 8, bạn nhận được thông báo lỗi vì điều kiện sai. Điều này chỉ ra rằng mật khẩu dài **8 ký tự**.
+7. Nhấp chuột phải vào yêu cầu và chọn **Send to Intruder**.
+8. Trong **Intruder**, thực hiện vét cạn (enumerate) mật khẩu:
+    - Thay đổi tham số user thành:
+        
+        ```jsx
+        administrator' && this.password[§0§]=='§a§
+        ```
+        
+        ![image.png](/assets/img/portswigger/lab-03-exploiting-nosql-injection-to-extract-data/image%206.png)
+        
+        Payload này bao gồm hai vị trí payload (payload positions). Hãy chắc chắn rằng payload đã được URL-encode (các ký tự đặc biệt).
+        
+    - Chọn **Cluster bomb** từ menu thả xuống "Attack type".
+    - Trong bảng **Payloads** ở bên cạnh, chọn **position 1** từ danh sách thả xuống "Payload position". Thêm các số từ 0 đến 7 (tương ứng với từng ký tự của mật khẩu).
+    - Chọn **position 2** từ danh sách thả xuống "Payload position", sau đó thêm các chữ cái thường từ a đến z. Nếu bạn đang sử dụng Burp Suite Professional, bạn có thể dùng danh sách a-z có sẵn.
+    - Nhấp **Start attack**.
+    - Sắp xếp kết quả tấn công theo **Payload 1**, sau đó theo **Length** (Độ dài phản hồi). Chú ý rằng sẽ có một yêu cầu cho mỗi vị trí ký tự (0 đến 7) được đánh giá là đúng (true) và truy xuất được chi tiết của administrator. Ghi lại các chữ cái từ cột **Payload 2** ghép lại với nhau.
+9. Trong trình duyệt của Burp, đăng nhập với tư cách người dùng administrator bằng mật khẩu vừa tìm được. Bài lab đã được giải quyết.
+
+### Lab 04: Exploiting NoSQL operator injection to extract unknown fields
+
+#### Mô tả
+Chức năng tra cứu người dùng trong bài lab này hoạt động trên nền tảng cơ sở dữ liệu NoSQL MongoDB. Nó tồn tại lỗ hổng NoSQL injection.
+
+Để hoàn thành bài lab, hãy đăng nhập với tư cách là carlos.
+
+**Mẹo**
+
+Để giải bài lab này, trước tiên bạn cần trích xuất (exfiltrate) giá trị của token đặt lại mật khẩu (password reset token) của người dùng carlos.
+
+#### Solve
+1. Trong trình duyệt của Burp, thử đăng nhập vào ứng dụng với tên người dùng carlos và mật khẩu invalid. Chú ý rằng bạn nhận được thông báo lỗi Invalid username or password (Tên người dùng hoặc mật khẩu không hợp lệ).
+2. Trong Burp, đi tới **Proxy &gt; HTTP history**. Nhấp chuột phải vào yêu cầu POST /login và chọn **Send to Repeater**.
+3. Trong **Repeater**, thay đổi giá trị của tham số `password` từ "invalid" thành `{"$ne":"invalid"}`, sau đó gửi yêu cầu. 
+    
+    ![image.png](/assets/img/portswigger/lab-04-exploiting-nosql-operator-injection-to-extract-unknown-fields/image.png)
+    
+    **Thay đổi sang user carlos**
+    
+    ![image.png](/assets/img/portswigger/lab-04-exploiting-nosql-operator-injection-to-extract-unknown-fields/image%201.png)
+    
+    Chú ý rằng bây giờ bạn nhận được thông báo lỗi Account locked (Tài khoản bị khóa). Bạn không thể truy cập tài khoản của Carlos.
+    
+    Phản hồi này chỉ ra rằng toán tử `$ne` (not equal - không bằng) đã được chấp nhận và ứng dụng có lỗ hổng.
+    
+4. Trong trình duyệt của Burp, thử đặt lại mật khẩu cho tài khoản carlos. Khi bạn gửi tên người dùng carlos, hãy quan sát rằng cơ chế đặt lại yêu cầu xác minh email, vì vậy bạn không thể tự mình đặt lại tài khoản.
+5. Trong **Repeater**, sử dụng yêu cầu POST /login để kiểm tra xem ứng dụng có dễ bị tấn công JavaScript injection hay không:
+    - Thêm "$where": "0" làm một tham số bổ sung trong dữ liệu JSON như sau:
+        
+        ```jsx
+        {"username":"carlos","password":{"$ne":"invalid"}, "$where": "0"}
+        ```
+        
+    - Gửi yêu cầu. Chú ý rằng bạn nhận được thông báo lỗi Invalid username or password.
+        
+        ![image.png](/assets/img/portswigger/lab-04-exploiting-nosql-operator-injection-to-extract-unknown-fields/image%202.png)
+        
+    - Thay đổi `"$where": "0"` thành `"$where": "1"`, sau đó gửi lại yêu cầu. Chú ý rằng bạn nhận được thông báo lỗi Account locked. Điều này chỉ ra rằng mã JavaScript trong mệnh đề $where đang được thực thi.
+        
+        ![image.png](/assets/img/portswigger/lab-04-exploiting-nosql-operator-injection-to-extract-unknown-fields/image%203.png)
+        
+6. Nhấp chuột phải vào yêu cầu và chọn **Send to Intruder**.
+7. Trong **Intruder**, xây dựng một cuộc tấn công để xác định tất cả các trường (fields) trên đối tượng người dùng (user object):
+    - Cập nhật tham số $where như sau:
+        
+        ```jsx
+        "$where":"Object.keys(this)[1].match('^.{}.*')"
+        ```
+        
+    - Thêm hai vị trí payload (payload positions). Vị trí đầu tiên xác định số thứ tự ký tự, và vị trí thứ hai xác định chính ký tự đó:
+        
+        ```jsx
+        "$where":"Object.keys(this)[1].match('^.{§§}§§.*')"
+        ```
+        
+        ![image.png](/assets/img/portswigger/lab-04-exploiting-nosql-operator-injection-to-extract-unknown-fields/image%204.png)
+        
+    - Chọn **Cluster bomb** từ menu thả xuống "Attack type".
+    - Trong bảng **Payloads** bên cạnh, chọn **position 1** từ danh sách "Payload position", sau đó đặt "Payload type" là **Numbers**. Đặt phạm vi số, ví dụ từ 0 đến 20.
+    - Chọn **position 2** từ danh sách "Payload position" và đảm bảo "Payload type" được đặt là **Simple list**. Thêm tất cả các số, chữ cái thường và chữ cái hoa làm payload. Nếu bạn dùng Burp Suite Professional, bạn có thể dùng các danh sách có sẵn a-z, A-Z, và 0-9. (abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ)
+    - Nhấp **Start attack**.
+    - Sắp xếp kết quả tấn công theo **Payload 1**, sau đó theo **Length** (Độ dài), để xác định các phản hồi có thông báo Account locked thay vì Invalid username or password.
+        
+        ![image.png](/assets/img/portswigger/lab-04-exploiting-nosql-operator-injection-to-extract-unknown-fields/image%205.png)
+        
+        Kết quả: các ký tự trong cột **Payload 2** ghép lại thành tên của tham số: `username`.
+        
+    - Lặp lại các bước trên để xác định các tham số JSON khác. Bạn có thể làm điều này bằng cách tăng chỉ số (index) của mảng keys sau mỗi lần thử, ví dụ:
+        
+        ```jsx
+        "$where":"Object.keys(this)[2].match('^.{}.*')"
+        "$where":"Object.keys(this)[2].match(/^a/)"
+        ```
+        
+    - *Chú ý rằng một trong các tham số JSON tìm được là dành cho token đặt lại mật khẩu tại index=4.*
+        
+        ![image.png](/assets/img/portswigger/lab-04-exploiting-nosql-operator-injection-to-extract-unknown-fields/image%206.png)
+        
+        Sắp xếp lại ta được field: `resetToken`
+        
+8. Kiểm tra tên trường đặt lại mật khẩu vừa tìm được dưới dạng tham số truy vấn trên các endpoint khác nhau:
+    - Trong **Proxy &gt; HTTP history**, xác định yêu cầu GET /forgot-password là một endpoint tiềm năng, vì nó liên quan đến chức năng đặt lại mật khẩu. Nhấp chuột phải vào yêu cầu và chọn **Send to Repeater**.
+    - Trong **Repeater**, gửi một trường không hợp lệ trong URL: GET /forgot-password?foo=invalid. Chú ý rằng phản hồi giống hệt với phản hồi gốc.
+    - Gửi tên trường token đặt lại mật khẩu (mà bạn đã trích xuất được) vào URL: GET /forgot-password?`resetToken`=invalid. Chú ý rằng bạn nhận được thông báo lỗi Invalid token. Điều này xác nhận rằng bạn đã có tên token và endpoint chính xác.
+        
+        ![image.png](/assets/img/portswigger/lab-04-exploiting-nosql-operator-injection-to-extract-unknown-fields/image%207.png)
+        
+9. Trong **Intruder**, sử dụng yêu cầu POST /login để xây dựng một cuộc tấn công nhằm trích xuất giá trị token đặt lại mật khẩu của Carlos:
+    - Giữ nguyên các cài đặt từ cuộc tấn công trước của bạn, nhưng cập nhật tham số $where như sau:
+        
+        ```jsx
+        "$where":"this.resetToken.match('^.{§§}§§.*')"
+        ```
+        
+        ![image.png](/assets/img/portswigger/lab-04-exploiting-nosql-operator-injection-to-extract-unknown-fields/image%208.png)
+        
+    - *Đảm bảo thay thế TENTOKENCUABAN bằng tên trường token thực tế mà bạn đã tìm thấy ở bước trước.*
+    - Nhấp **Start attack**.
+    - Sắp xếp kết quả theo **Payload 1**, sau đó theo **Length**, để xác định các phản hồi Account locked. Ghi lại các ký tự từ cột **Payload 2** ghép lại với nhau để có chuỗi token.
+        
+        ![image.png](/assets/img/portswigger/lab-04-exploiting-nosql-operator-injection-to-extract-unknown-fields/image%209.png)
+        
+        `acbfafc43512414f`
+        
+10. Trong **Repeater**, gửi giá trị của token đặt lại mật khẩu vào URL của yêu cầu GET /forgot-password:
+    
+    ```jsx
+    GET /forgot-password?resetToken=acbfafc43512414f
+    ```
+    
+    ![image.png](/assets/img/portswigger/lab-04-exploiting-nosql-operator-injection-to-extract-unknown-fields/image%2010.png)
+    
+11. Đăng nhập vào tài khoản của carlos để solve lab
+    
+    ![image.png](/assets/img/portswigger/lab-04-exploiting-nosql-operator-injection-to-extract-unknown-fields/image%2011.png)
+
 ## Ngăn chặn việc tiêm NoSQL
 
 - Dọn dẹp và xác thực thông tin đầu vào của người dùng bằng cách sử dụng while list gồm các ký tự được chấp nhận.
