@@ -4,7 +4,7 @@ title: "Server-side template injection"
 render_with_liquid: false
 categories:
   - Web Security
-  - PortSwigger
+  - Common Injection
 tags:
   - portswigger
   - server-side-template-injection
