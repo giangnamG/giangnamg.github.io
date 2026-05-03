@@ -3,8 +3,8 @@
   children:
     - name: PortSwigger
       slug: portswigger
-- name: Common Injection
-  slug: common-injection
+    - name: Common Injection
+      slug: common-injection
 - name: Pentest Network Services
   slug: pentest-network-services
 - name: HTB Challenge - Labs

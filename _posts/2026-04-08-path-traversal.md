@@ -3,6 +3,7 @@ layout: post
 title: "Path traversal"
 render_with_liquid: false
 categories:
+  - Web Security
   - Common Injection
 tags:
   - path-traversal
