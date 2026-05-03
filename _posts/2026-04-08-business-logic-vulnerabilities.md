@@ -3,7 +3,7 @@ layout: post
 title: "Business logic vulnerabilities"
 render_with_liquid: false
 categories:
-  - PortSwigger
+  - Web Security
 tags:
   - portswigger
   - business-logic-vulnerabilities

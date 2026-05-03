@@ -3,7 +3,7 @@ layout: post
 title: "Vuln Upload In PHP (1)"
 render_with_liquid: false
 categories:
-  - PortSwigger
+  - Web Security
 tags:
   - portswigger
   - file-upload-vulnerabilities

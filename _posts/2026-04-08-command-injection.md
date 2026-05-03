@@ -3,7 +3,7 @@ layout: post
 title: "Command injection"
 render_with_liquid: false
 categories:
-  - PortSwigger
+  - Web Security
 tags:
   - portswigger
   - command-injection

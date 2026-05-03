@@ -3,7 +3,7 @@ layout: post
 title: "Race conditions"
 render_with_liquid: false
 categories:
-  - PortSwigger
+  - Web Security
 tags:
   - portswigger
   - race-conditions

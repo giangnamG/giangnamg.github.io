@@ -3,7 +3,7 @@ layout: post
 title: "Cross-site scripting (XSS)"
 render_with_liquid: false
 categories:
-  - PortSwigger
+  - Web Security
 tags:
   - portswigger
   - cross-site-scripting-xss

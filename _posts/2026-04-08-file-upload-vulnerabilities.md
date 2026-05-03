@@ -3,7 +3,7 @@ layout: post
 title: "File upload vulnerabilities"
 render_with_liquid: false
 categories:
-  - PortSwigger
+  - Web Security
 tags:
   - portswigger
   - file-upload-vulnerabilities

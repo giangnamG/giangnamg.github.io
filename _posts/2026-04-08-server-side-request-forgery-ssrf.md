@@ -3,7 +3,7 @@ layout: post
 title: "Server-side request forgery (SSRF)"
 render_with_liquid: false
 categories:
-  - PortSwigger
+  - Web Security
 tags:
   - portswigger
   - server-side-request-forgery-ssrf

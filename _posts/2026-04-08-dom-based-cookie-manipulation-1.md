@@ -3,7 +3,7 @@ layout: post
 title: "🍪 DOM-based cookie manipulation (1)"
 render_with_liquid: false
 categories:
-  - PortSwigger
+  - Web Security
 tags:
   - portswigger
   - dom-based-vulnerabilities

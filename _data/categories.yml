@@ -1,5 +1,5 @@
-- name: PortSwigger
-  slug: portswigger
+- name: Web Security
+  slug: web-security
 - name: Common Injection
   slug: common-injection
 - name: Pentest Network Services

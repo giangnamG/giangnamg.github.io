@@ -3,7 +3,7 @@ layout: post
 title: "OAuth 2.0 authentication vulnerabilities (1)"
 render_with_liquid: false
 categories:
-  - PortSwigger
+  - Web Security
 tags:
   - portswigger
   - oauth-authentication

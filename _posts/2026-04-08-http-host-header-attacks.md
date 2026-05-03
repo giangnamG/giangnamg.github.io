@@ -3,7 +3,7 @@ layout: post
 title: "HTTP Host header attacks"
 render_with_liquid: false
 categories:
-  - PortSwigger
+  - Web Security
 tags:
   - portswigger
   - http-host-header-attacks

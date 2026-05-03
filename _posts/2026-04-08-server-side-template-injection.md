@@ -3,7 +3,7 @@ layout: post
 title: "Server-side template injection"
 render_with_liquid: false
 categories:
-  - PortSwigger
+  - Web Security
 tags:
   - portswigger
   - server-side-template-injection

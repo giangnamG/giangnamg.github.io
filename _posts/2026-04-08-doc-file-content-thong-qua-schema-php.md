@@ -3,7 +3,7 @@ layout: post
 title: "Đọc File Content Thông Qua Schema: PHP:///"
 render_with_liquid: false
 categories:
-  - PortSwigger
+  - Web Security
 tags:
   - portswigger
   - path-traversal

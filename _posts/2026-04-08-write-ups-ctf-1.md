@@ -3,7 +3,7 @@ layout: post
 title: "Write Ups CTF (1)"
 render_with_liquid: false
 categories:
-  - PortSwigger
+  - Web Security
 tags:
   - portswigger
   - path-traversal

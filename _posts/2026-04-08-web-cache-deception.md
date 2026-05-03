@@ -3,7 +3,7 @@ layout: post
 title: "Web cache deception"
 render_with_liquid: false
 categories:
-  - PortSwigger
+  - Web Security
 tags:
   - portswigger
   - web-cache-deception

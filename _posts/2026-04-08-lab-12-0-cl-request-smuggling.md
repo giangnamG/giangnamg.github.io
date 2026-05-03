@@ -3,7 +3,7 @@ layout: post
 title: "Lab 12: 0.CL request smuggling"
 render_with_liquid: false
 categories:
-  - PortSwigger
+  - Web Security
 tags:
   - portswigger
   - http-request-smuggling
