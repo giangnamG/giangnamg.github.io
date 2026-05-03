@@ -4,6 +4,7 @@ title: "JWT attacks"
 render_with_liquid: false
 categories:
   - Web Security
+  - PortSwigger
 tags:
   - portswigger
   - jwt-attacks

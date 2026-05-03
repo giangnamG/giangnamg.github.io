@@ -4,6 +4,7 @@ title: "API testing"
 render_with_liquid: false
 categories:
   - Web Security
+  - PortSwigger
 tags:
   - portswigger
   - api-testing

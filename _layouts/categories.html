@@ -7,109 +7,55 @@ layout: page
 
 {% assign configured_categories = site.data.categories %}
 {% assign configured_category_names = configured_categories | map: 'name' %}
-{% assign discovered_categories = '' | split: '' %}
 {% assign group_index = 0 %}
 {% assign HEAD_PREFIX = 'h_' %}
+{% assign LIST_PREFIX = 'l_' %}
 
 <style>
-  .categories .card-header .category-name {
+  .categories .category-name {
     color: var(--heading-color);
   }
 
-  .categories .card-header.category-empty .category-name,
-  .categories .card-header.category-empty .category-count,
-  .categories .card-header.category-empty i,
-  .categories .card-header.category-empty .category-trigger {
+  .categories .category-empty .category-name,
+  .categories .category-empty .category-count,
+  .categories .category-empty i,
+  .categories .category-empty .category-trigger {
     color: var(--text-muted-color) !important;
     opacity: 0.92;
   }
 </style>
 
 {% for item in configured_categories %}
-  {% assign category_name = item.name %}
-  {% assign posts_of_category = site.categories[category_name] %}
-  {% assign top_posts_size = posts_of_category | size %}
-
-  <div class="card categories">
-    <div
-      id="{{ HEAD_PREFIX }}{{ group_index }}"
-      class="card-header d-flex justify-content-between hide-border-bottom{% if top_posts_size == 0 %} category-empty{% endif %}"
-    >
-      <span class="ms-2">
-        <i class="far fa-folder fa-fw"></i>
-
-        {% if top_posts_size > 0 %}
-          {% capture category_url %}/categories/{{ category_name | slugify | url_encode }}/{% endcapture %}
-          <a href="{{ category_url | relative_url }}" class="mx-2 category-name">{{ category_name }}</a>
-        {% else %}
-          <span class="mx-2 category-name">{{ category_name }}</span>
-        {% endif %}
-
-        <span class="text-muted small font-weight-light category-count">
-          {{ top_posts_size }}
-          {% if top_posts_size > 1 %}
-            {{
-              site.data.locales[lang].categories.post_measure.plural
-              | default: site.data.locales[lang].categories.post_measure
-            }}
-          {% else %}
-            {{
-              site.data.locales[lang].categories.post_measure.singular
-              | default: site.data.locales[lang].categories.post_measure
-            }}
-          {% endif %}
-        </span>
-      </span>
-
-      <span class="category-trigger hide-border-bottom disabled">
-        <i class="fas fa-fw fa-angle-right"></i>
-      </span>
-    </div>
-  </div>
+  {% include category-tree-card.html
+    category_name=item.name
+    configured_children=item.children
+    index=group_index
+    head_prefix=HEAD_PREFIX
+    list_prefix=LIST_PREFIX
+    lang=lang
+  %}
 
   {% assign group_index = group_index | plus: 1 %}
 {% endfor %}
 
-{% for category in site.categories %}
+{% assign sort_categories = site.categories | sort %}
+
+{% for category in sort_categories %}
   {% assign category_name = category | first %}
+  {% assign posts_of_category = category | last %}
+  {% assign first_post = posts_of_category | first %}
 
-  {% unless configured_category_names contains category_name %}
-    {% assign posts_of_category = site.categories[category_name] %}
-    {% assign top_posts_size = posts_of_category | size %}
+  {% if category_name == first_post.categories[0] %}
+    {% unless configured_category_names contains category_name %}
+      {% include category-tree-card.html
+        category_name=category_name
+        index=group_index
+        head_prefix=HEAD_PREFIX
+        list_prefix=LIST_PREFIX
+        lang=lang
+      %}
 
-    <div class="card categories">
-      <div
-        id="{{ HEAD_PREFIX }}{{ group_index }}"
-        class="card-header d-flex justify-content-between hide-border-bottom"
-      >
-        <span class="ms-2">
-          <i class="far fa-folder fa-fw"></i>
-
-          {% capture category_url %}/categories/{{ category_name | slugify | url_encode }}/{% endcapture %}
-          <a href="{{ category_url | relative_url }}" class="mx-2 category-name">{{ category_name }}</a>
-
-          <span class="text-muted small font-weight-light category-count">
-            {{ top_posts_size }}
-            {% if top_posts_size > 1 %}
-              {{
-                site.data.locales[lang].categories.post_measure.plural
-                | default: site.data.locales[lang].categories.post_measure
-              }}
-            {% else %}
-              {{
-                site.data.locales[lang].categories.post_measure.singular
-                | default: site.data.locales[lang].categories.post_measure
-              }}
-            {% endif %}
-          </span>
-        </span>
-
-        <span class="category-trigger hide-border-bottom disabled">
-          <i class="fas fa-fw fa-angle-right"></i>
-        </span>
-      </div>
-    </div>
-
-    {% assign group_index = group_index | plus: 1 %}
-  {% endunless %}
+      {% assign group_index = group_index | plus: 1 %}
+    {% endunless %}
+  {% endif %}
 {% endfor %}

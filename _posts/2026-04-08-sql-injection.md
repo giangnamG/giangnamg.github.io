@@ -4,6 +4,7 @@ title: "SQL injection"
 render_with_liquid: false
 categories:
   - Web Security
+  - PortSwigger
 tags:
   - portswigger
   - sql-injection

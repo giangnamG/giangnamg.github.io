@@ -4,6 +4,7 @@ title: "Lab 01: Detecting NoSQL injection"
 render_with_liquid: false
 categories:
   - Web Security
+  - PortSwigger
 tags:
   - portswigger
   - nosql-injection

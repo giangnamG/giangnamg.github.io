@@ -4,6 +4,7 @@ title: "Web cache poisoning"
 render_with_liquid: false
 categories:
   - Web Security
+  - PortSwigger
 tags:
   - portswigger
   - web-cache-poisoning

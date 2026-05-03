@@ -4,6 +4,7 @@ title: "Cross-site scripting (XSS)"
 render_with_liquid: false
 categories:
   - Web Security
+  - PortSwigger
 tags:
   - portswigger
   - cross-site-scripting-xss

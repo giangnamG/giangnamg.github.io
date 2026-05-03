@@ -4,6 +4,7 @@ title: "Essential skills"
 render_with_liquid: false
 categories:
   - Web Security
+  - PortSwigger
 tags:
   - portswigger
   - essential-skills

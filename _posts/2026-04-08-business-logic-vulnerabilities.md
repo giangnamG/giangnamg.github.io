@@ -4,6 +4,7 @@ title: "Business logic vulnerabilities"
 render_with_liquid: false
 categories:
   - Web Security
+  - PortSwigger
 tags:
   - portswigger
   - business-logic-vulnerabilities

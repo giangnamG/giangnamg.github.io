@@ -4,6 +4,7 @@ title: "Cross-site request forgery (CSRF)"
 render_with_liquid: false
 categories:
   - Web Security
+  - PortSwigger
 tags:
   - portswigger
   - cross-site-request-forgery-csrf

@@ -4,6 +4,7 @@ title: "Web LLM attacks"
 render_with_liquid: false
 categories:
   - Web Security
+  - PortSwigger
 tags:
   - portswigger
   - web-llm-attacks

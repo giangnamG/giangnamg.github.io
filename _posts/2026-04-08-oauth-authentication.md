@@ -4,6 +4,7 @@ title: "OAuth authentication"
 render_with_liquid: false
 categories:
   - Web Security
+  - PortSwigger
 tags:
   - portswigger
   - oauth-authentication

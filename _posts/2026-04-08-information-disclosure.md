@@ -4,6 +4,7 @@ title: "Information disclosure"
 render_with_liquid: false
 categories:
   - Web Security
+  - PortSwigger
 tags:
   - portswigger
   - information-disclosure

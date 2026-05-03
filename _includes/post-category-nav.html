@@ -1,7 +1,7 @@
-{% assign primary_category = page.categories | first %}
-{% assign category_posts = site.categories[primary_category] %}
+{% assign navigation_category = page.categories | last %}
+{% assign category_posts = site.categories[navigation_category] %}
 
-{% if page.collection == 'posts' and primary_category and category_posts and category_posts.size > 1 %}
+{% if page.collection == 'posts' and navigation_category and category_posts and category_posts.size > 1 %}
   {% assign current_index = nil %}
 
   {% for category_post in category_posts %}
@@ -32,7 +32,7 @@
         <div class="post-category-nav__grid{% unless previous_post and next_post %} post-category-nav__grid--single{% endunless %}">
           {% if previous_post %}
             <a class="post-category-nav__card post-category-nav__card--previous" href="{{ previous_post.url | relative_url }}">
-              <span class="post-category-nav__eyebrow">Previous in {{ primary_category }}</span>
+              <span class="post-category-nav__eyebrow">Previous in {{ navigation_category }}</span>
               <strong class="post-category-nav__title">{{ previous_post.title }}</strong>
             </a>
           {% else %}
@@ -41,7 +41,7 @@
 
           {% if next_post %}
             <a class="post-category-nav__card post-category-nav__card--next" href="{{ next_post.url | relative_url }}">
-              <span class="post-category-nav__eyebrow">Next in {{ primary_category }}</span>
+              <span class="post-category-nav__eyebrow">Next in {{ navigation_category }}</span>
               <strong class="post-category-nav__title">{{ next_post.title }}</strong>
             </a>
           {% else %}

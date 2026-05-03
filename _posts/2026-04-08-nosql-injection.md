@@ -4,6 +4,7 @@ title: "NoSQL injection"
 render_with_liquid: false
 categories:
   - Web Security
+  - PortSwigger
 tags:
   - portswigger
   - nosql-injection

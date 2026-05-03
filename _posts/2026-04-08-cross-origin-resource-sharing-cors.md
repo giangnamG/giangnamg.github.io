@@ -4,6 +4,7 @@ title: "Cross-origin resource sharing (CORS)"
 render_with_liquid: false
 categories:
   - Web Security
+  - PortSwigger
 tags:
   - portswigger
   - cross-origin-resource-sharing-cors

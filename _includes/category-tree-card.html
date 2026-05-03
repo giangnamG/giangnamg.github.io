@@ -1,0 +1,132 @@
+{% assign category_name = include.category_name %}
+{% assign posts_of_category = site.categories[category_name] %}
+{% assign top_posts_size = posts_of_category | size %}
+{% assign child_names = '' | split: '' %}
+{% assign nonempty_child_names = '' | split: '' %}
+
+{% if include.configured_children %}
+  {% for child in include.configured_children %}
+    {% unless child_names contains child.name %}
+      {% assign child_names = child_names | push: child.name %}
+    {% endunless %}
+  {% endfor %}
+{% endif %}
+
+{% for post in posts_of_category %}
+  {% assign second_category = post.categories[1] %}
+  {% if second_category %}
+    {% unless child_names contains second_category %}
+      {% assign child_names = child_names | push: second_category %}
+    {% endunless %}
+  {% endif %}
+{% endfor %}
+
+{% for child_name in child_names %}
+  {% assign child_posts_size = site.categories[child_name] | size %}
+  {% if child_posts_size > 0 %}
+    {% assign nonempty_child_names = nonempty_child_names | push: child_name %}
+  {% endif %}
+{% endfor %}
+
+{% assign child_names_size = child_names | size %}
+{% assign sub_categories_size = nonempty_child_names | size %}
+
+<div class="card categories">
+  <div
+    id="{{ include.head_prefix }}{{ include.index }}"
+    class="card-header d-flex justify-content-between hide-border-bottom{% if top_posts_size == 0 %} category-empty{% endif %}"
+  >
+    <span class="ms-2">
+      <i class="far fa-folder{% if child_names_size > 0 %}-open{% endif %} fa-fw"></i>
+
+      {% if top_posts_size > 0 %}
+        {% capture category_url %}/categories/{{ category_name | slugify | url_encode }}/{% endcapture %}
+        <a href="{{ category_url | relative_url }}" class="mx-2 category-name">{{ category_name }}</a>
+      {% else %}
+        <span class="mx-2 category-name">{{ category_name }}</span>
+      {% endif %}
+
+      <span class="text-muted small font-weight-light category-count">
+        {% if sub_categories_size > 0 %}
+          {{ sub_categories_size }}
+          {% if sub_categories_size > 1 %}
+            {{
+              site.data.locales[include.lang].categories.category_measure.plural
+              | default: site.data.locales[include.lang].categories.category_measure
+            }}
+          {% else %}
+            {{
+              site.data.locales[include.lang].categories.category_measure.singular
+              | default: site.data.locales[include.lang].categories.category_measure
+            }}
+          {% endif -%}
+          ,
+        {% endif %}
+
+        {{ top_posts_size }}
+        {% if top_posts_size > 1 %}
+          {{
+            site.data.locales[include.lang].categories.post_measure.plural
+            | default: site.data.locales[include.lang].categories.post_measure
+          }}
+        {% else %}
+          {{
+            site.data.locales[include.lang].categories.post_measure.singular
+            | default: site.data.locales[include.lang].categories.post_measure
+          }}
+        {% endif %}
+      </span>
+    </span>
+
+    {% if child_names_size > 0 %}
+      <a
+        href="#{{ include.list_prefix }}{{ include.index }}"
+        data-bs-toggle="collapse"
+        aria-expanded="true"
+        aria-label="{{ include.head_prefix }}{{ include.index }}-trigger"
+        class="category-trigger hide-border-bottom"
+      >
+        <i class="fas fa-fw fa-angle-down"></i>
+      </a>
+    {% else %}
+      <span data-bs-toggle="collapse" class="category-trigger hide-border-bottom disabled">
+        <i class="fas fa-fw fa-angle-right"></i>
+      </span>
+    {% endif %}
+  </div>
+
+  {% if child_names_size > 0 %}
+    <div id="{{ include.list_prefix }}{{ include.index }}" class="collapse show" aria-expanded="true">
+      <ul class="list-group">
+        {% for child_name in child_names %}
+          {% assign child_posts_size = site.categories[child_name] | size %}
+          <li class="list-group-item{% if child_posts_size == 0 %} category-empty{% endif %}">
+            <i class="far fa-folder fa-fw"></i>
+
+            {% if child_posts_size > 0 %}
+              {% capture child_url %}/categories/{{ child_name | slugify | url_encode }}/{% endcapture %}
+              <a href="{{ child_url | relative_url }}" class="mx-2 category-name">{{ child_name }}</a>
+            {% else %}
+              <span class="mx-2 category-name">{{ child_name }}</span>
+            {% endif %}
+
+            <span class="text-muted small font-weight-light category-count">
+              {{ child_posts_size }}
+              {% if child_posts_size > 1 %}
+                {{
+                  site.data.locales[include.lang].categories.post_measure.plural
+                  | default: site.data.locales[include.lang].categories.post_measure
+                }}
+              {% else %}
+                {{
+                  site.data.locales[include.lang].categories.post_measure.singular
+                  | default: site.data.locales[include.lang].categories.post_measure
+                }}
+              {% endif %}
+            </span>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% endif %}
+</div>

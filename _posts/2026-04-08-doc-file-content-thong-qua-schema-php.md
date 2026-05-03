@@ -4,6 +4,7 @@ title: "Đọc File Content Thông Qua Schema: PHP:///"
 render_with_liquid: false
 categories:
   - Web Security
+  - PortSwigger
 tags:
   - portswigger
   - path-traversal

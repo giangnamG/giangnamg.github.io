@@ -4,6 +4,7 @@ title: "GraphQL API vulnerabilities"
 render_with_liquid: false
 categories:
   - Web Security
+  - PortSwigger
 tags:
   - portswigger
   - graphql-api-vulnerabilities

@@ -4,6 +4,7 @@ title: "DOM-based vulnerabilities"
 render_with_liquid: false
 categories:
   - Web Security
+  - PortSwigger
 tags:
   - portswigger
   - dom-based-vulnerabilities
