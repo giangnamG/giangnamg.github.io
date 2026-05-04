@@ -7,6 +7,8 @@
       slug: common-injection
 - name: Pentest Network Services
   slug: pentest-network-services
+- name: Password Attack
+  slug: password-attack
 - name: File Transfer
   slug: file-transfer
 - name: HTB Challenge - Labs
