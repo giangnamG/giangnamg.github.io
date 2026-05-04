@@ -1,6 +1,7 @@
 ---
 layout: post
 title: "Introduction to Password Cracking"
+date: 2026-05-04 17:30:00 +0700
 render_with_liquid: false
 categories:
   - Password Attack
