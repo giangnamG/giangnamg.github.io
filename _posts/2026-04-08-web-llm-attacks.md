@@ -10,7 +10,6 @@ tags:
   - web-llm-attacks
 source_collection: notion_portswigger
 ---
-Created by: Nguyễn Giang Nam
 Topics: Advanced
 
 # Test 01: **Mapping LLM API attack surface**

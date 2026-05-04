@@ -10,7 +10,6 @@ tags:
   - web-cache-poisoning
 source_collection: notion_portswigger
 ---
-Created by: Nguyễn Giang Nam
 Topics: Advanced
 
 # **Lab 01: Web cache poisoning with an unkeyed header**

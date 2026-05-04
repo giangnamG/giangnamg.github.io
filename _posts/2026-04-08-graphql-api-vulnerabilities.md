@@ -10,7 +10,6 @@ tags:
   - graphql-api-vulnerabilities
 source_collection: notion_portswigger
 ---
-Created by: Nguyễn Giang Nam
 Topics: Advanced
 
 # Test 01: **Finding a hidden GraphQL endpoint**

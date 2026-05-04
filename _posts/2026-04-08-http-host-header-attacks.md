@@ -10,5 +10,4 @@ tags:
   - http-host-header-attacks
 source_collection: notion_portswigger
 ---
-Created by: Nguyễn Giang Nam
 Topics: Advanced

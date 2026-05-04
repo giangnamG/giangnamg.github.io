@@ -9,7 +9,6 @@ tags:
   - path-traversal
 source_collection: notion
 ---
-Created by: Nguyễn Giang Nam
 Topics: Server-side
 
 Sửa đổi `filename` thành

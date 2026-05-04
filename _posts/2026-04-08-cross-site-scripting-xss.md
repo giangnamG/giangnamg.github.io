@@ -10,7 +10,6 @@ tags:
   - cross-site-scripting-xss
 source_collection: notion_portswigger
 ---
-Created by: Nguyễn Giang Nam
 Topics: Client-side
 
 # **Lab 01: Reflected XSS into HTML context with nothing encoded**

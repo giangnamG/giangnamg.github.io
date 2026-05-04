@@ -10,7 +10,6 @@ tags:
   - sql-injection
 source_collection: notion_portswigger
 ---
-Created by: Nguyễn Giang Nam
 Topics: Server-side
 
 # **Lab 01: SQL injection vulnerability in WHERE clause allowing retrieval of hidden data**

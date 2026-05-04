@@ -10,5 +10,4 @@ tags:
   - essential-skills
 source_collection: notion_portswigger
 ---
-Created by: Nguyễn Giang Nam
 Topics: Advanced

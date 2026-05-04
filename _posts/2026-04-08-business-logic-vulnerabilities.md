@@ -10,7 +10,6 @@ tags:
   - business-logic-vulnerabilities
 source_collection: notion_portswigger
 ---
-Created by: Nguyễn Giang Nam
 Topics: Server-side
 
 # **Lab 01: Excessive trust in client-side controls**

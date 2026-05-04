@@ -10,7 +10,6 @@ tags:
   - cross-site-request-forgery-csrf
 source_collection: notion_portswigger
 ---
-Created by: Nguyễn Giang Nam
 Topics: Client-side
 
 # Test 00: **CSRF vulnerability with no defenses**

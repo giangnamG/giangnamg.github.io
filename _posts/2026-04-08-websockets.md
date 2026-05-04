@@ -10,7 +10,6 @@ tags:
   - websockets
 source_collection: notion_portswigger
 ---
-Created by: Nguyễn Giang Nam
 Topics: Client-side
 
 # Test 01: Bypass client side

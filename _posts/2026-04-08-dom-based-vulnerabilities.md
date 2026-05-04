@@ -10,7 +10,6 @@ tags:
   - dom-based-vulnerabilities
 source_collection: notion_portswigger
 ---
-Created by: Nguyễn Giang Nam
 Topics: Client-side
 
 # **Lab 01: [DOM XSS using web messages](https://portswigger.net/web-security/dom-based/controlling-the-web-message-source/lab-dom-xss-using-web-messages)**

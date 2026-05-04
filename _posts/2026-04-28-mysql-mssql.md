@@ -10,7 +10,6 @@ tags:
   - mssql
 source_collection: manual
 ---
-Created by: Nguyễn Giang Nam
 Topics: Network Services
 
 ## Overview

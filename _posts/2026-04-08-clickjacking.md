@@ -10,7 +10,6 @@ tags:
   - clickjacking
 source_collection: notion_portswigger
 ---
-Created by: Nguyễn Giang Nam
 Topics: Client-side
 
 # **Lab 01: Basic clickjacking with CSRF token protection**

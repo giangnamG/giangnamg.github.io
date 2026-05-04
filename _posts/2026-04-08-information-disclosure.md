@@ -10,5 +10,4 @@ tags:
   - information-disclosure
 source_collection: notion_portswigger
 ---
-Created by: Nguyễn Giang Nam
 Topics: Server-side
