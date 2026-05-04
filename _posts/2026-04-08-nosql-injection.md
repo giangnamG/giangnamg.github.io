@@ -314,12 +314,7 @@ Nếu response body không khác biệt đủ rõ, payload có thể tạo delay
 Quy trình:
 
 1. Load page nhiều lần để xác định baseline loading time.
-2. Chèn timing-based payload vào input. Payload gây delay có chủ đích khi được thực thi, ví dụ:
-
-```json
-{"$where":"sleep(5000)"}
-```
-
+2. Chèn timing-based payload vào input. Payload gây delay có chủ đích khi được thực thi.
 3. Quan sát response có chậm hơn baseline hay không. Nếu có, đó là dấu hiệu injection thành công.
 
 Ví dụ payload gây delay nếu ký tự đầu của password là `a`:
@@ -467,7 +462,37 @@ Thêm `$where` như một parameter bổ sung và so sánh false/true condition:
 
 Nếu response khác nhau, JavaScript expression trong `$where` có thể đang được evaluate.
 
-### 4.5. Extract field name bằng `Object.keys()`
+### 4.5. Timing-based operator injection
+
+Timing-based operator injection dùng cùng ý tưởng delay có điều kiện, nhưng payload được gửi dưới dạng NoSQL operator trong JSON thay vì phá chuỗi JavaScript expression trong một parameter.
+
+Backend vulnerable thường có dạng dùng nguyên `req.body` làm query:
+
+```js
+app.post("/login", async (req, res) => {
+  const user = await db.collection("users").findOne(req.body);
+
+  res.status(user ? 200 : 401).end();
+});
+```
+
+Khi ứng dụng không tạo khác biệt rõ ràng trong response body, có thể thử chèn `$where` để tạo delay:
+
+```json
+{"username":"admin","password":{"$ne":"invalid"},"$where":"sleep(5000)"}
+```
+
+Nếu response chậm hơn baseline, điều đó cho thấy `$where` đã được xử lý như một operator và JavaScript expression đã được evaluate.
+
+Để biến delay thành boolean oracle, đặt điều kiện vào `$where`. Ví dụ kiểm tra ký tự đầu tiên của password:
+
+```json
+{"username":"admin","password":{"$ne":"invalid"},"$where":"function(){if(this.password[0]==='a'){sleep(5000)};return true;}"}
+```
+
+Nếu request chỉ chậm khi ký tự đang thử đúng, có thể lặp lại theo từng vị trí và từng ký tự. Khác với timing-based syntax injection, payload ở đây không cần đóng quote của input; nó thêm operator mới vào JSON query.
+
+### 4.6. Extract field name bằng `Object.keys()`
 
 Khi đã chèn được operator cho phép chạy JavaScript, có thể dùng `Object.keys()` để extract tên field.
 
@@ -479,7 +504,7 @@ Ví dụ:
 
 Payload này kiểm tra field đầu tiên của object hiện tại và so khớp ký tự đầu tiên của field name. Bằng cách thay đổi index field, vị trí ký tự, và ký tự thử, có thể extract field name từng ký tự.
 
-### 4.6. Extract data bằng `$regex`
+### 4.7. Extract data bằng `$regex`
 
 Trong một số trường hợp, vẫn có thể extract data bằng operator không chạy JavaScript. Ví dụ login request:
 
