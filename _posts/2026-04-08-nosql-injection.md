@@ -359,11 +359,72 @@ admin'+function(x){if(x.password[0]==="a"){sleep(5000)};}(this)+'
 
 ### 3.11. Giới hạn của Syntax injection
 
-Các giới hạn của Syntax injection xuất phát từ context mà input được chèn vào. Nếu backend không nối input vào query expression, các payload kiểu đóng quote, null character, hoặc chèn JavaScript expression không có cú pháp gốc để phá vỡ.
+Các giới hạn của Syntax injection xuất phát từ context mà input được chèn vào. Kỹ thuật này cần backend biến input thành một phần của query expression.
 
-Các kỹ thuật dùng `Object.keys(this)`, `this[Object.keys(this)[n]]`, `match()`, hoặc `sleep(5000)` chỉ áp dụng khi query engine evaluate JavaScript và `this` là document hiện tại, ví dụ trong `$where`. Nếu input chỉ trở thành một value JSON thông thường, các expression này không được chạy.
+Ví dụ backend vulnerable:
 
-Boolean-based extraction và timing-based extraction cũng cần oracle. Nếu response của điều kiện đúng/sai không khác biệt và timing không có độ lệch ổn định, không đủ tín hiệu để extract dữ liệu.
+```js
+app.get("/product/lookup", async (req, res) => {
+  const category = req.query.category;
+
+  const products = await db.collection("products").find({
+    $where: "this.category == '" + category + "' && this.released == 1",
+  }).toArray();
+
+  res.json(products);
+});
+```
+
+Trong code này, payload như `fizzy'||'1'=='1` có thể đóng chuỗi `category`, chèn boolean expression mới, rồi làm thay đổi logic của `$where`.
+
+Ngược lại, nếu backend dùng structured query và input chỉ là value của field, payload syntax không có cú pháp gốc để phá:
+
+```js
+app.get("/product/lookup", async (req, res) => {
+  const category = req.query.category;
+
+  const products = await db.collection("products").find({
+    category: category,
+    released: 1,
+  }).toArray();
+
+  res.json(products);
+});
+```
+
+Trong code này, chuỗi `fizzy'||'1'=='1` chỉ là giá trị literal của field `category`. Nó không được nối vào JavaScript expression, nên không thể đóng quote, không thể dùng null character để bỏ phần `released`, và không chạy được `Object.keys(this)` hay `sleep(5000)`.
+
+Một giới hạn khác là các kỹ thuật dùng `Object.keys(this)`, `this[Object.keys(this)[n]]`, `match()`, hoặc `sleep(5000)` cần JavaScript context mà `this` là document hiện tại:
+
+```js
+app.get("/user/lookup", async (req, res) => {
+  const username = req.query.username;
+
+  const user = await db.collection("users").findOne({
+    $where: "this.username == '" + username + "'",
+  });
+
+  res.status(user ? 200 : 404).end();
+});
+```
+
+Với code này, payload có thể chèn thêm expression như `this.password.match(/^p/)` hoặc `Object.keys(this)[1].match(/^p/)`. Nếu backend không dùng `$where` hoặc cơ chế tương đương để evaluate JavaScript trên document, các expression đó chỉ là text.
+
+Cuối cùng, extraction cần oracle. Nếu backend luôn trả response giống nhau cho cả nhánh đúng và sai, boolean-based extraction không có tín hiệu:
+
+```js
+app.get("/user/lookup", async (req, res) => {
+  const username = req.query.username;
+
+  await db.collection("users").findOne({
+    $where: "this.username == '" + username + "'",
+  });
+
+  res.status(200).json({ message: "OK" });
+});
+```
+
+Trong trường hợp này, điều kiện đúng/sai không tạo khác biệt trong status code hoặc body. Timing-based extraction chỉ còn dùng được nếu payload tạo delay ổn định và môi trường phản hồi đủ ổn định để phân biệt với baseline.
 
 ## 4. Operator injection
 
